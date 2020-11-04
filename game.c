@@ -30,9 +30,10 @@ int main()
     int scoreCounter = 00;
     int leverCooldown; 
     bool done = false;
-    bool redraw = true;
+    bool redraw = true;    
     float x, y;    
     unsigned char tecla[ALLEGRO_KEY_MAX];
+    ALLEGRO_EVENT event;
 
     typedef struct {
         int body;
@@ -42,7 +43,9 @@ int main()
         int player;
         int cd;
         char identity;
-    }obj;   
+    }obj;
+
+   
     
     char map[N_LINHAS][N_COLUNAS] ={{'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','O','#','#','#','#','#','#','#','#','#'},
                                     {'#','J','M','#','#','M','M','B','M','#','M','M','M','M','#','M','#','#','#','#','#','#','#','M','M','C','#'},
@@ -113,19 +116,19 @@ int main()
                     objImage[j][i].identity = 'B';
                     break;
                 case 'O':
-                    objImage[j][i].body = 1;
+                    objImage[j][i].body = 0 ;
                     objImage[j][i].colectable = 0;
                     objImage[j][i].player = 0;
                     objImage[j][i].shiftable = 0;
                     objImage[j][i].identity = 'O';
-                     objImage[j][i].cd = 0;
+                    objImage[j][i].cd = 0;
                     break;
             }
         }                
     }
 
     inicializa(al_init(), "Allegro.");
-    inicializa(al_install_keyboard(), "Teclado.");
+    inicializa(al_install_keyboard(), "Teclado.-+");
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / 30.0);
     inicializa(timer, "Temporizador.");
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
@@ -227,7 +230,7 @@ int main()
                                     objImage[j][i].shiftable =  objImage[j][i-1].shiftable;
                                     objImage[j][i].identity = objImage[j][i-1].identity;
 
-                                    objImage[j][i-1].body = 1;
+                                    objImage[j][i-1].body = 0;
                                     objImage[j][i-1].colectable = 0;
                                     objImage[j][i-1].player = 0;
                                     objImage[j][i-1].shiftable = 0;
@@ -243,7 +246,7 @@ int main()
                                     objImage[j][i].shiftable =  objImage[j-1][i].shiftable;
                                     objImage[j][i].identity = objImage[j-1][i].identity;
 
-                                    objImage[j-1][i].body = 1;
+                                    objImage[j-1][i].body = 0;
                                     objImage[j-1][i].colectable = 0;
                                     objImage[j-1][i].player = 0;
                                     objImage[j-1][i].shiftable = 0;
@@ -259,7 +262,7 @@ int main()
                                     objImage[j][i].shiftable =  objImage[j][i+1].shiftable;
                                     objImage[j][i].identity = objImage[j][i+1].identity;
 
-                                    objImage[j][i+1].body = 1;
+                                    objImage[j][i+1].body = 0;
                                     objImage[j][i+1].colectable = 0;
                                     objImage[j][i+1].player = 0;
                                     objImage[j][i+1].shiftable = 0;
@@ -275,7 +278,7 @@ int main()
                                     objImage[j][i].shiftable =  objImage[j+1][i].shiftable;
                                     objImage[j][i].identity = objImage[j+1][i].identity;
 
-                                    objImage[j+1][i].body = 1;
+                                    objImage[j+1][i].body = 0;
                                     objImage[j+1][i].colectable = 0;
                                     objImage[j+1][i].player = 0;
                                     objImage[j+1][i].shiftable = 0;
@@ -349,7 +352,7 @@ int main()
             }
             al_draw_filled_rectangle(x, y, x + ESCALA, y + ESCALA, al_map_rgb(153,102,255));
             al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 0, 0, "X: %.1f Y: %.1f", x, y);
-            al_draw_textf(font, al_map_rgb(255, 255, 255), 1200, 0, 0, "Pontuação: %d",scoreCounter);
+            al_draw_textf(font, al_map_rgb(255, 255, 255), 24*ESCALA, 0, 0, "Pontuação: %d",scoreCounter);
             al_flip_display();
 
             redraw = false;
