@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <allegro5/allegro5.h>
 #include <allegro5/allegro_font.h>
 #include <allegro5/allegro_primitives.h>
@@ -7,6 +8,10 @@
 
 #define KEY_SEEN     1
 #define KEY_RELEASED 2
+#define N_LINHAS 11
+#define N_COLUNAS 27
+#define TEMPO_ESPERA 20
+#define ESCALA 60
 
 void inicializa(bool teste, const char *descricao)
 {
@@ -18,36 +23,43 @@ void inicializa(bool teste, const char *descricao)
 
 int main()
 {
-    int i,j;
+    srand(time(NULL));
+
+    int randomItem; 
+    int i,j,k;
     int scoreCounter = 00;
+    int leverCooldown; 
     bool done = false;
     bool redraw = true;
-    ALLEGRO_EVENT event;
-    float x, y;      
+    float x, y;    
+    unsigned char tecla[ALLEGRO_KEY_MAX];
+
     typedef struct {
         int body;
         int shiftable;
         int state;
         int colectable;
         int player;
+        int cd;
         char identity;
-    }obj;
-    unsigned char tecla[ALLEGRO_KEY_MAX];
-    char map[11][27] = {{'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'},
-                        {'#','J','M','#','#','M','M','B','M','#','M','M','M','M','#','M','#','#','#','#','#','#','#','M','M','C','#'},
-                        {'#','#','A','M','M','M','#','#','M','#','M','#','#','#','#','M','#','#','#','#','#','#','#','#','#','#','#'},
-                        {'#','#','C','#','#','M','#','#','M','#','M','M','M','#','#','M','#','#','#','#','#','#','#','#','#','#','#'},
-                        {'#','#','M','#','#','M','#','#','M','#','M','#','#','#','#','M','#','#','#','#','#','#','#','#','#','#','#'},
-                        {'#','M','D','#','#','M','M','M','M','#','M','M','M','M','#','M','M','M','M','#','#','#','#','#','#','#','#'},
-                        {'#','#','#','M','M','M','#','M','M','M','#','#','M','#','#','M','#','M','M','M','M','#','M','#','#','#','#'},
-                        {'#','#','#','M','#','#','#','M','#','M','#','#','M','#','#','M','#','M','#','#','#','#','M','#','#','#','#'},
-                        {'#','#','#','M','#','#','#','M','M','#','#','#','M','#','#','M','#','M','M','M','#','#','M','#','#','#','#'},
-                        {'#','#','#','M','#','#','#','M','#','M','#','#','M','#','#','M','#','M','#','#','#','#','M','#','#','#','#'},
-                        {'#','#','#','M','M','M','#','M','#','#','M','#','M','M','M','M','#','M','M','M','M','#','M','M','M','M','#'}}; 
-    obj objImage[11][27];
+    }obj;   
+    
+    char map[N_LINHAS][N_COLUNAS] ={{'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','O','#','#','#','#','#','#','#','#','#'},
+                                    {'#','J','M','#','#','M','M','B','M','#','M','M','M','M','#','M','#','#','#','#','#','#','#','M','M','C','#'},
+                                    {'O','#','A','M','M','M','#','#','M','#','M','#','#','#','#','M','#','#','#','#','#','#','#','#','#','#','#'},
+                                    {'#','#','C','#','#','M','#','M','M','M','M','M','M','#','#','M','#','#','#','#','#','#','#','#','#','#','#'},
+                                    {'#','#','O','#','#','M','#','M','O','O','M','#','#','#','#','M','#','#','#','#','#','#','#','#','#','#','O'},
+                                    {'#','M','D','#','#','M','M','M','M','M','M','M','M','M','#','M','M','M','M','#','#','#','#','#','#','#','#'},
+                                    {'#','#','#','M','M','M','#','M','M','M','#','#','M','#','#','M','#','M','M','M','M','#','M','#','#','#','#'},
+                                    {'#','#','#','M','#','#','#','M','#','M','#','#','M','#','#','M','#','M','#','#','#','#','M','#','#','#','#'},
+                                    {'#','#','#','M','#','#','#','M','M','#','#','#','M','#','#','M','#','M','M','M','#','#','M','#','#','#','#'},
+                                    {'#','#','#','M','#','#','#','M','#','M','#','#','M','#','#','M','#','M','#','#','#','#','M','#','#','#','#'},
+                                    {'#','O','#','M','M','M','#','M','#','#','M','#','M','M','M','M','#','M','M','M','M','#','M','M','M','M','#'}}; 
 
-    for(i=0;i<27;i++){
-        for(j=0;j<11;j++){
+    obj objImage[N_LINHAS][N_COLUNAS];
+
+    for(i=0;i<N_COLUNAS;i++){
+        for(j=0;j<N_LINHAS;j++){
             switch(map[j][i]){
                 case '#':
                     objImage[j][i].body = 1;
@@ -83,8 +95,8 @@ int main()
                     objImage[j][i].player = 1;
                     objImage[j][i].shiftable = 0;
                     objImage[j][i].identity = 'J';
-                    y = j*50;
-                    x = i*50;
+                    y = j*ESCALA;
+                    x = i*ESCALA;
                     break;
                 case 'M':
                     objImage[j][i].body = 0;
@@ -100,12 +112,20 @@ int main()
                     objImage[j][i].shiftable = 1;
                     objImage[j][i].identity = 'B';
                     break;
+                case 'O':
+                    objImage[j][i].body = 1;
+                    objImage[j][i].colectable = 0;
+                    objImage[j][i].player = 0;
+                    objImage[j][i].shiftable = 0;
+                    objImage[j][i].identity = 'O';
+                     objImage[j][i].cd = 0;
+                    break;
             }
         }                
     }
 
     inicializa(al_init(), "Allegro.");
-    inicializa(al_install_keyboard(), "Teclado.-+");
+    inicializa(al_install_keyboard(), "Teclado.");
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / 30.0);
     inicializa(timer, "Temporizador.");
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
@@ -115,7 +135,7 @@ int main()
     al_set_new_display_option(ALLEGRO_SAMPLES, 8, ALLEGRO_SUGGEST);
     al_set_new_bitmap_flags(ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR);
 
-    ALLEGRO_DISPLAY* disp = al_create_display(50*27 , 11*50);
+    ALLEGRO_DISPLAY* disp = al_create_display(ESCALA*N_COLUNAS , N_LINHAS*ESCALA);
     inicializa(disp, "Tela.");
     ALLEGRO_FONT* font = al_create_builtin_font();
     inicializa(font, "Fonte.");
@@ -130,41 +150,46 @@ int main()
     al_start_timer(timer);
     while(1)
     {
+        randomItem =  rand() % 4;
         al_wait_for_event(queue, &event);
                 
-        if((objImage[(int)y/50][(int)x/50].identity == 'M') || (objImage[(int)y/50][(int)x/50].identity == 'C')){
-            objImage[(int)y/50][(int)x/50].identity = ' ';
-            objImage[(int)y/50][(int)x/50].body = 0;
-            objImage[(int)y/50][(int)x/50].colectable = 0;
-            objImage[(int)y/50][(int)x/50].player = 0;
-            objImage[(int)y/50][(int)x/50].shiftable = 0;
+        if((objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'M') || (objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'C')){
+            objImage[(int)y/ESCALA][(int)x/ESCALA].identity = ' ';
+            objImage[(int)y/ESCALA][(int)x/ESCALA].body = 0;
+            objImage[(int)y/ESCALA][(int)x/ESCALA].colectable = 0;
+            objImage[(int)y/ESCALA][(int)x/ESCALA].player = 0;
+            objImage[(int)y/ESCALA][(int)x/ESCALA].shiftable = 0;
             scoreCounter++;
+        }
+
+        if(leverCooldown > 0){
+            leverCooldown--;
         }
 
         switch(event.type)
         {
             case ALLEGRO_EVENT_TIMER:
                 if(tecla[ALLEGRO_KEY_UP]){
-                    if(y == 0 || (objImage[(int)(y-50)/50][(int)x/50].body == 1)){}else{
-                        y-=50;
+                    if(y == 0 || (objImage[(int)(y-ESCALA)/ESCALA][(int)x/ESCALA].body == 1)){}else{
+                        y-=ESCALA;
                     }
                 }
                    
                 if(tecla[ALLEGRO_KEY_DOWN]){
-                    if(y == 10*50 || (objImage[(int)(y+50)/50][(int)x/50].body == 1)){}else{
-                        y+=50;
+                    if(y == 10*ESCALA || (objImage[(int)(y+ESCALA)/ESCALA][(int)x/ESCALA].body == 1)){}else{
+                        y+=ESCALA;
                     }
                 }
             
                 if(tecla[ALLEGRO_KEY_LEFT]){
-                    if(x == 0 || (objImage[(int)y/50][(int)(x-50)/50].body == 1)){}else{
-                        x-=50;
+                    if(x == 0 || (objImage[(int)y/ESCALA][(int)(x-ESCALA)/ESCALA].body == 1)){}else{
+                        x-=ESCALA;
                     }
                 }
                 
                 if(tecla[ALLEGRO_KEY_RIGHT]){
-                    if(x == 26*50 || (objImage[(int)y/50][(int)(x+50)/50].body == 1)){}else{
-                        x+=50;
+                    if(x == 26*ESCALA || (objImage[(int)y/ESCALA][(int)(x+ESCALA)/ESCALA].body == 1)){}else{
+                        x+=ESCALA;
                     }
                 }
                 
@@ -172,23 +197,100 @@ int main()
                     done = true;
                 }
 
-                if(tecla[ALLEGRO_KEY_B] && ((objImage[(int)y/50][(int)x/50].identity == 'B') || (objImage[(int)(y-50)/50][(int)x/50].identity == 'B') || (objImage[(int)(y+50)/50][(int)x/50].identity == 'B') || (objImage[(int)y/50][(int)(x-50)/50].identity == 'B')|| (objImage[(int)y/50][(int)(x+50)/50].identity == 'B'))){
-                    for(i=0;i<27;i++){
-                        for(j=0;j<11;j++){
+                if((tecla[ALLEGRO_KEY_B] && ((objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)(y-ESCALA)/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)(y+ESCALA)/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)y/ESCALA][(int)(x-ESCALA)/ESCALA].identity == 'B')|| (objImage[(int)y/ESCALA][(int)(x+ESCALA)/ESCALA].identity == 'B'))) && (leverCooldown == 0)){
+                    for(i=0;i<N_COLUNAS;i++){
+                        for(j=0;j<N_LINHAS;j++){
                             if(objImage[j][i].identity == 'A'){
                                 objImage[j][i].identity = 'D';
                                 objImage[j][i].body = 1;
-                                }
+                                leverCooldown = TEMPO_ESPERA;
+                            }
                             else if(objImage[j][i].identity == 'D'){
                                 objImage[j][i].identity = 'A';
                                 objImage[j][i].body = 0;
+                                leverCooldown = TEMPO_ESPERA;
                             }
                         }                
                     }
                 }
+
+                for(i=0;i<N_COLUNAS;i++){
+                    for(j=0;j<N_LINHAS;j++){
+                        if((objImage[j][i].identity == 'O')&&(objImage[j][i].cd == 0)){
+                            switch (randomItem)
+                            {
+                            case 0:
+                                if((objImage[j][i-1].body == 0) && (objImage[j][i-1].identity != 'A') && (objImage[j][i-1].identity != 'D') && (objImage[j][i-1].identity != 'B') && ((i-1)*ESCALA > 00)){
+                                    objImage[j][i].body = objImage[j][i-1].body;
+                                    objImage[j][i].colectable = objImage[j][i-1].colectable;
+                                    objImage[j][i].player = objImage[j][i-1].player;
+                                    objImage[j][i].shiftable =  objImage[j][i-1].shiftable;
+                                    objImage[j][i].identity = objImage[j][i-1].identity;
+
+                                    objImage[j][i-1].body = 1;
+                                    objImage[j][i-1].colectable = 0;
+                                    objImage[j][i-1].player = 0;
+                                    objImage[j][i-1].shiftable = 0;
+                                    objImage[j][i-1].identity = 'O';
+                                    objImage[j][i-1].cd = TEMPO_ESPERA;
+                                }
+                                break; 
+                            case 1:
+                                if((objImage[j-1][i].body == 0) && (objImage[j-1][i].identity != 'A') && (objImage[j-1][i].identity != 'D') && (objImage[j-1][i].identity != 'B')  && ((j-1)*ESCALA > 00)){
+                                    objImage[j][i].body = objImage[j-1][i].body;
+                                    objImage[j][i].colectable = objImage[j-1][i].colectable;
+                                    objImage[j][i].player = objImage[j-1][i].player;
+                                    objImage[j][i].shiftable =  objImage[j-1][i].shiftable;
+                                    objImage[j][i].identity = objImage[j-1][i].identity;
+
+                                    objImage[j-1][i].body = 1;
+                                    objImage[j-1][i].colectable = 0;
+                                    objImage[j-1][i].player = 0;
+                                    objImage[j-1][i].shiftable = 0;
+                                    objImage[j-1][i].identity = 'O';
+                                    objImage[j-1][i].cd = TEMPO_ESPERA;
+                                }
+                                break; 
+                            case 2:
+                                if((objImage[j][i+1].body == 0 ) && (objImage[j][i+1].identity != 'A') && (objImage[j][i+1].identity != 'D') && (objImage[j][i+1].identity != 'B') && ((i+1)*ESCALA < N_COLUNAS*ESCALA)){
+                                    objImage[j][i].body = objImage[j][i+1].body;
+                                    objImage[j][i].colectable = objImage[j][i+1].colectable;
+                                    objImage[j][i].player = objImage[j][i+1].player;
+                                    objImage[j][i].shiftable =  objImage[j][i+1].shiftable;
+                                    objImage[j][i].identity = objImage[j][i+1].identity;
+
+                                    objImage[j][i+1].body = 1;
+                                    objImage[j][i+1].colectable = 0;
+                                    objImage[j][i+1].player = 0;
+                                    objImage[j][i+1].shiftable = 0;
+                                    objImage[j][i+1].identity = 'O';
+                                    objImage[j][i+1].cd = TEMPO_ESPERA;
+                                }
+                                break; 
+                            case 3:
+                                if((objImage[j+1][i].body == 0) && (objImage[j+1][i].identity != 'A') && (objImage[j+1][i].identity != 'D') && (objImage[j+1][i].identity != 'B') && ((j+1)*ESCALA < N_LINHAS*ESCALA)){
+                                    objImage[j][i].body = objImage[j+1][i].body;
+                                    objImage[j][i].colectable = objImage[j+1][i].colectable;
+                                    objImage[j][i].player = objImage[j+1][i].player;
+                                    objImage[j][i].shiftable =  objImage[j+1][i].shiftable;
+                                    objImage[j][i].identity = objImage[j+1][i].identity;
+
+                                    objImage[j+1][i].body = 1;
+                                    objImage[j+1][i].colectable = 0;
+                                    objImage[j+1][i].player = 0;
+                                    objImage[j+1][i].shiftable = 0;
+                                    objImage[j+1][i].identity = 'O';
+                                    objImage[j+1][i].cd = TEMPO_ESPERA;
+                                }
+                                break;                           
+                            }
+                        }else if(objImage[j][i].cd > 0){
+                            objImage[j][i].cd--;
+                        }
+                    }                
+                }
            
-char mapImage[11][27];
-    memcpy(mapImage,map, 11*27*sizeof(char));
+
                 for(int i = 0; i < ALLEGRO_KEY_MAX; i++)
                     tecla[i] &= KEY_SEEN;
 
@@ -201,7 +303,6 @@ char mapImage[11][27];
             case ALLEGRO_EVENT_KEY_UP:
                 tecla[event.keyboard.keycode] &= KEY_RELEASED;
                 break;
-
             case ALLEGRO_EVENT_DISPLAY_CLOSE:
                 done = true;
                 break;
@@ -213,37 +314,40 @@ char mapImage[11][27];
         if(redraw && al_is_event_queue_empty(queue))
         {
             al_clear_to_color(al_map_rgb(0, 0, 0));
-            for(i=0;i<27;i++){
-                for(j=0;j<11;j++){
+            for(i=0;i<N_COLUNAS;i++){
+                for(j=0;j<N_LINHAS;j++){
                     switch(objImage[j][i].identity){
                         case '#':
-                            al_draw_filled_rectangle(i*50, j*50, i*50 + 49 , j*50 + 49 , al_map_rgb(172, 172, 172));
+                            al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(172, 172, 172));
                             break;
                         case 'J':
-                             al_draw_filled_rectangle(i*50, j*50, i*50 + 49 , j*50 + 49 , al_map_rgb(137, 137, 137));
+                             al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(0, 0, 0));
                             break;
                         case 'C':
-                             al_draw_filled_rectangle(i*50, j*50, i*50 + 49 , j*50 + 49 , al_map_rgb(217,217,25));
+                             al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(217,217,25));
                             break;
                         case 'M':
-                            al_draw_filled_rectangle(i*50, j*50, i*50 + 49 , j*50 + 49 , al_map_rgb(255, 247, 0));
+                            al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(255, 247, 0));
                             break;
                         case 'B':
-                            al_draw_filled_rectangle(i*50, j*50, i*50 + 49 , j*50 + 49 , al_map_rgb(202, 135, 0));
+                            al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(202, 135, 0));
+                            break;
+                        case 'O':
+                            al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(0,179,30));
                             break;
                         case 'A':
-                            al_draw_filled_rectangle(i*50, j*50, i*50 + 49 , j*50 + 49 , al_map_rgb(56 , 176, 222));
+                            al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(56 , 176, 222));
                             break;
                         case 'D':
-                            al_draw_filled_rectangle(i*50, j*50, i*50 + 49 , j*50 + 49 , al_map_rgb(255 , 0, 0));
+                            al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(255 , 0, 0));
                             break;
                         case ' ':
-                            al_draw_filled_rectangle(i*50, j*50, i*50 + 49 , j*50 + 49 , al_map_rgb(0, 0, 0));
+                            al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(0, 0, 0));
                             break;
                     }
                 }                
             }
-            al_draw_filled_rectangle(x, y, x + 50, y + 50, al_map_rgb(255, 0, 0));
+            al_draw_filled_rectangle(x, y, x + ESCALA, y + ESCALA, al_map_rgb(153,102,255));
             al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 0, 0, "X: %.1f Y: %.1f", x, y);
             al_draw_textf(font, al_map_rgb(255, 255, 255), 1200, 0, 0, "Pontuação: %d",scoreCounter);
             al_flip_display();
