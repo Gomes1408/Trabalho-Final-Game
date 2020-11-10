@@ -13,6 +13,18 @@
 #define TEMPO_ESPERA 20
 #define ESCALA 60
 
+typedef struct 
+{
+        int body;
+        int shiftable;
+        int state;
+        int colectable;
+        int player;
+        int cd;
+        char identity;
+}obj;
+
+
 void inicializa(bool teste, const char *descricao)
 {
     if(teste) return;
@@ -21,49 +33,11 @@ void inicializa(bool teste, const char *descricao)
     exit(1);
 }
 
-int main()
-{
-    srand(time(NULL));
-
-    int randomItem; 
-    int i,j,k;
-    int scoreCounter = 00;
-    int leverCooldown; 
-    bool done = false;
-    bool redraw = true;    
-    float x, y;    
-    unsigned char tecla[ALLEGRO_KEY_MAX];
-    ALLEGRO_EVENT event;
-
-    typedef struct {
-        int body;
-        int shiftable;
-        int state;
-        int colectable;
-        int player;
-        int cd;
-        char identity;
-    }obj;
-
-   
-    
-    char map[N_LINHAS][N_COLUNAS] ={{'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','O','#','#','#','#','#','#','#','#','#'},
-                                    {'#','J','M','#','#','M','M','B','M','#','M','M','M','M','#','M','#','#','#','#','#','#','#','M','M','C','#'},
-                                    {'O','#','A','M','M','M','#','#','M','#','M','#','#','#','#','M','#','#','#','#','#','#','#','#','#','#','#'},
-                                    {'#','#','C','#','#','M','#','M','M','M','M','M','M','#','#','M','#','#','#','#','#','#','#','#','#','#','#'},
-                                    {'#','#','O','#','#','M','#','M','O','O','M','#','#','#','#','M','#','#','#','#','#','#','#','#','#','#','O'},
-                                    {'#','M','D','#','#','M','M','M','M','M','M','M','M','M','#','M','M','M','M','#','#','#','#','#','#','#','#'},
-                                    {'#','#','#','M','M','M','#','M','M','M','#','#','M','#','#','M','#','M','M','M','M','#','M','#','#','#','#'},
-                                    {'#','#','#','M','#','#','#','M','#','M','#','#','M','#','#','M','#','M','#','#','#','#','M','#','#','#','#'},
-                                    {'#','#','#','M','#','#','#','M','M','#','#','#','M','#','#','M','#','M','M','M','#','#','M','#','#','#','#'},
-                                    {'#','#','#','M','#','#','#','M','#','M','#','#','M','#','#','M','#','M','#','#','#','#','M','#','#','#','#'},
-                                    {'#','O','#','M','M','M','#','M','#','#','M','#','M','M','M','M','#','M','M','M','M','#','M','M','M','M','#'}}; 
-
-    obj objImage[N_LINHAS][N_COLUNAS];
-
+void loadMap(char src[N_LINHAS][N_COLUNAS], obj objImage[N_LINHAS][N_COLUNAS], float* x, float* y){
+    int i,j;
     for(i=0;i<N_COLUNAS;i++){
         for(j=0;j<N_LINHAS;j++){
-            switch(map[j][i]){
+            switch(src[j][i]){
                 case '#':
                     objImage[j][i].body = 1;
                     objImage[j][i].colectable = 0;
@@ -98,8 +72,8 @@ int main()
                     objImage[j][i].player = 1;
                     objImage[j][i].shiftable = 0;
                     objImage[j][i].identity = 'J';
-                    y = j*ESCALA;
-                    x = i*ESCALA;
+                    *y = j*ESCALA;
+                    *x = i*ESCALA;
                     break;
                 case 'M':
                     objImage[j][i].body = 0;
@@ -126,6 +100,184 @@ int main()
             }
         }                
     }
+}
+
+int collectItem(int counter,obj objImage[N_LINHAS][N_COLUNAS], int x, int y)
+{
+    objImage[(int)y/ESCALA][(int)x/ESCALA].identity = ' ';
+    objImage[(int)y/ESCALA][(int)x/ESCALA].body = 0;
+    objImage[(int)y/ESCALA][(int)x/ESCALA].colectable = 0;
+    objImage[(int)y/ESCALA][(int)x/ESCALA].player = 0;
+    objImage[(int)y/ESCALA][(int)x/ESCALA].shiftable = 0;
+    counter++;
+
+    return counter;
+}
+
+void leverActivate(int *cd,obj objImage[N_LINHAS][N_COLUNAS])
+{
+    int i,j;
+    for(i=0;i<N_COLUNAS;i++){
+        for(j=0;j<N_LINHAS;j++){
+            if(objImage[j][i].identity == 'A'){
+                objImage[j][i].identity = 'D';
+                objImage[j][i].body = 1;
+                *cd = TEMPO_ESPERA;
+            }
+            else if(objImage[j][i].identity == 'D'){
+                objImage[j][i].identity = 'A';
+                objImage[j][i].body = 0;
+                *cd = TEMPO_ESPERA;
+            }
+        }                
+    }
+}
+
+void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)
+{  
+    int i,j;
+    for(i=0;i<N_COLUNAS;i++){
+        for(j=0;j<N_LINHAS;j++){
+            if((objImage[j][i].identity == 'O')&&(objImage[j][i].cd == 0)){
+                switch (randomItem)
+                {
+                    case 0:
+                        if((objImage[j][i-1].body == 0) && (objImage[j][i-1].identity != 'A') && (objImage[j][i-1].identity != 'D') && (objImage[j][i-1].identity != 'B') && ((i-1)*ESCALA > 00)){
+                            objImage[j][i].body = objImage[j][i-1].body;
+                            objImage[j][i].colectable = objImage[j][i-1].colectable;
+                            objImage[j][i].player = objImage[j][i-1].player;
+                            objImage[j][i].shiftable =  objImage[j][i-1].shiftable;
+                            objImage[j][i].identity = objImage[j][i-1].identity;
+
+                            objImage[j][i-1].body = 0;
+                            objImage[j][i-1].colectable = 0;
+                            objImage[j][i-1].player = 0;
+                            objImage[j][i-1].shiftable = 0;
+                            objImage[j][i-1].identity = 'O';
+                            objImage[j][i-1].cd = TEMPO_ESPERA;
+                        }
+                        break; 
+                    case 1:
+                        if((objImage[j-1][i].body == 0) && (objImage[j-1][i].identity != 'A') && (objImage[j-1][i].identity != 'D') && (objImage[j-1][i].identity != 'B')  && ((j-1)*ESCALA > 00)){
+                            objImage[j][i].body = objImage[j-1][i].body;
+                            objImage[j][i].colectable = objImage[j-1][i].colectable;
+                            objImage[j][i].player = objImage[j-1][i].player;
+                            objImage[j][i].shiftable =  objImage[j-1][i].shiftable;
+                            objImage[j][i].identity = objImage[j-1][i].identity;
+
+                            objImage[j-1][i].body = 0;
+                            objImage[j-1][i].colectable = 0;
+                            objImage[j-1][i].player = 0;
+                            objImage[j-1][i].shiftable = 0;
+                            objImage[j-1][i].identity = 'O';
+                            objImage[j-1][i].cd = TEMPO_ESPERA;
+                        }
+                        break; 
+                    case 2:
+                        if((objImage[j][i+1].body == 0 ) && (objImage[j][i+1].identity != 'A') && (objImage[j][i+1].identity != 'D') && (objImage[j][i+1].identity != 'B') && ((i+1)*ESCALA < N_COLUNAS*ESCALA)){
+                            objImage[j][i].body = objImage[j][i+1].body;
+                            objImage[j][i].colectable = objImage[j][i+1].colectable;
+                            objImage[j][i].player = objImage[j][i+1].player;
+                            objImage[j][i].shiftable =  objImage[j][i+1].shiftable;
+                            objImage[j][i].identity = objImage[j][i+1].identity;
+
+                            objImage[j][i+1].body = 0;
+                            objImage[j][i+1].colectable = 0;
+                            objImage[j][i+1].player = 0;
+                            objImage[j][i+1].shiftable = 0;
+                            objImage[j][i+1].identity = 'O';
+                            objImage[j][i+1].cd = TEMPO_ESPERA;
+                        }
+                    break; 
+                    case 3:
+                        if((objImage[j+1][i].body == 0) && (objImage[j+1][i].identity != 'A') && (objImage[j+1][i].identity != 'D') && (objImage[j+1][i].identity != 'B') && ((j+1)*ESCALA < N_LINHAS*ESCALA)){
+                            objImage[j][i].body = objImage[j+1][i].body;
+                            objImage[j][i].colectable = objImage[j+1][i].colectable;
+                            objImage[j][i].player = objImage[j+1][i].player;
+                            objImage[j][i].shiftable =  objImage[j+1][i].shiftable;
+                            objImage[j][i].identity = objImage[j+1][i].identity;
+
+                            objImage[j+1][i].body = 0;
+                            objImage[j+1][i].colectable = 0;
+                            objImage[j+1][i].player = 0;
+                            objImage[j+1][i].shiftable = 0;
+                            objImage[j+1][i].identity = 'O';
+                            objImage[j+1][i].cd = TEMPO_ESPERA;
+                        }
+                    break;                           
+                }
+            }else if(objImage[j][i].cd > 0){
+                objImage[j][i].cd--;
+            }
+        }                
+    }
+}
+
+void drawMap(obj objImage[N_LINHAS][N_COLUNAS])
+{
+    int i,j;
+    for(i=0;i<N_COLUNAS;i++){
+        for(j=0;j<N_LINHAS;j++){
+            switch(objImage[j][i].identity){
+                case '#':
+                    al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(172, 172, 172));
+                    break;
+                case 'J':
+                    al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(0, 0, 0));
+                    break;
+                case 'C':
+                    al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(217,217,25));
+                    break;
+                case 'M':
+                    al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(255, 247, 0));
+                    break;
+                case 'B':
+                    al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(202, 135, 0));
+                    break;
+                case 'O':
+                    al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(0,179,30));
+                    break;
+                case 'A':
+                    al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(56 , 176, 222));
+                    break;
+                case 'D':
+                    al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(255 , 0, 0));
+                    break;
+                case ' ':
+                    al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(0, 0, 0));
+                    break;
+            }
+        }                
+    }
+}
+
+int main()
+{
+    srand(time(NULL));
+    int randomItem; 
+    int i,j,k;
+    int scoreCounter = 00;
+    int leverCooldown; 
+    bool done = false;
+    bool redraw = true;    
+    float x, y;    
+    unsigned char tecla[ALLEGRO_KEY_MAX];
+    ALLEGRO_EVENT event;   
+    
+    char map[N_LINHAS][N_COLUNAS] ={{'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','O','#','#','#','#','#','#','#','#','#'},
+                                    {'#','J','M','#','#','M','M','B','M','#','M','M','M','M','#','M','#','#','#','#','#','#','#','M','M','C','#'},
+                                    {'O','#','A','M','M','M','#','#','M','#','M','#','#','#','#','M','#','#','#','#','#','#','#','#','#','#','#'},
+                                    {'#','#','C','#','#','M','#','M','M','M','M','M','M','#','#','M','#','#','#','#','#','#','#','#','#','#','#'},
+                                    {'#','#','O','#','#','M','#','M','O','O','M','#','#','#','#','M','#','#','#','#','#','#','#','#','#','#','O'},
+                                    {'#','M','D','#','#','M','M','M','M','M','M','M','M','M','#','M','M','M','M','#','#','#','#','#','#','#','#'},
+                                    {'#','#','#','M','M','M','#','M','M','M','#','#','M','#','#','M','#','M','M','M','M','#','M','#','#','#','#'},
+                                    {'#','#','#','M','#','#','#','M','#','M','#','#','M','#','#','M','#','M','#','#','#','#','M','#','#','#','#'},
+                                    {'#','#','#','M','#','#','#','M','M','#','#','#','M','#','#','M','#','M','M','M','#','#','M','#','#','#','#'},
+                                    {'#','#','#','M','#','#','#','M','#','M','#','#','M','#','#','M','#','M','#','#','#','#','M','#','#','#','#'},
+                                    {'#','O','#','M','M','M','#','M','#','#','M','#','M','M','M','M','#','M','M','M','M','#','M','M','M','M','#'}}; 
+
+    obj objImage[N_LINHAS][N_COLUNAS];    
+    loadMap(map,objImage,&x,&y);
 
     inicializa(al_init(), "Allegro.");
     inicializa(al_install_keyboard(), "Teclado.-+");
@@ -157,12 +309,7 @@ int main()
         al_wait_for_event(queue, &event);
                 
         if((objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'M') || (objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'C')){
-            objImage[(int)y/ESCALA][(int)x/ESCALA].identity = ' ';
-            objImage[(int)y/ESCALA][(int)x/ESCALA].body = 0;
-            objImage[(int)y/ESCALA][(int)x/ESCALA].colectable = 0;
-            objImage[(int)y/ESCALA][(int)x/ESCALA].player = 0;
-            objImage[(int)y/ESCALA][(int)x/ESCALA].shiftable = 0;
-            scoreCounter++;
+            scoreCounter = collectItem(scoreCounter,objImage, x, y);    
         }
 
         if(leverCooldown > 0){
@@ -201,97 +348,10 @@ int main()
                 }
 
                 if((tecla[ALLEGRO_KEY_B] && ((objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)(y-ESCALA)/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)(y+ESCALA)/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)y/ESCALA][(int)(x-ESCALA)/ESCALA].identity == 'B')|| (objImage[(int)y/ESCALA][(int)(x+ESCALA)/ESCALA].identity == 'B'))) && (leverCooldown == 0)){
-                    for(i=0;i<N_COLUNAS;i++){
-                        for(j=0;j<N_LINHAS;j++){
-                            if(objImage[j][i].identity == 'A'){
-                                objImage[j][i].identity = 'D';
-                                objImage[j][i].body = 1;
-                                leverCooldown = TEMPO_ESPERA;
-                            }
-                            else if(objImage[j][i].identity == 'D'){
-                                objImage[j][i].identity = 'A';
-                                objImage[j][i].body = 0;
-                                leverCooldown = TEMPO_ESPERA;
-                            }
-                        }                
-                    }
+                    leverActivate(&leverCooldown, objImage);
                 }
 
-                for(i=0;i<N_COLUNAS;i++){
-                    for(j=0;j<N_LINHAS;j++){
-                        if((objImage[j][i].identity == 'O')&&(objImage[j][i].cd == 0)){
-                            switch (randomItem)
-                            {
-                            case 0:
-                                if((objImage[j][i-1].body == 0) && (objImage[j][i-1].identity != 'A') && (objImage[j][i-1].identity != 'D') && (objImage[j][i-1].identity != 'B') && ((i-1)*ESCALA > 00)){
-                                    objImage[j][i].body = objImage[j][i-1].body;
-                                    objImage[j][i].colectable = objImage[j][i-1].colectable;
-                                    objImage[j][i].player = objImage[j][i-1].player;
-                                    objImage[j][i].shiftable =  objImage[j][i-1].shiftable;
-                                    objImage[j][i].identity = objImage[j][i-1].identity;
-
-                                    objImage[j][i-1].body = 0;
-                                    objImage[j][i-1].colectable = 0;
-                                    objImage[j][i-1].player = 0;
-                                    objImage[j][i-1].shiftable = 0;
-                                    objImage[j][i-1].identity = 'O';
-                                    objImage[j][i-1].cd = TEMPO_ESPERA;
-                                }
-                                break; 
-                            case 1:
-                                if((objImage[j-1][i].body == 0) && (objImage[j-1][i].identity != 'A') && (objImage[j-1][i].identity != 'D') && (objImage[j-1][i].identity != 'B')  && ((j-1)*ESCALA > 00)){
-                                    objImage[j][i].body = objImage[j-1][i].body;
-                                    objImage[j][i].colectable = objImage[j-1][i].colectable;
-                                    objImage[j][i].player = objImage[j-1][i].player;
-                                    objImage[j][i].shiftable =  objImage[j-1][i].shiftable;
-                                    objImage[j][i].identity = objImage[j-1][i].identity;
-
-                                    objImage[j-1][i].body = 0;
-                                    objImage[j-1][i].colectable = 0;
-                                    objImage[j-1][i].player = 0;
-                                    objImage[j-1][i].shiftable = 0;
-                                    objImage[j-1][i].identity = 'O';
-                                    objImage[j-1][i].cd = TEMPO_ESPERA;
-                                }
-                                break; 
-                            case 2:
-                                if((objImage[j][i+1].body == 0 ) && (objImage[j][i+1].identity != 'A') && (objImage[j][i+1].identity != 'D') && (objImage[j][i+1].identity != 'B') && ((i+1)*ESCALA < N_COLUNAS*ESCALA)){
-                                    objImage[j][i].body = objImage[j][i+1].body;
-                                    objImage[j][i].colectable = objImage[j][i+1].colectable;
-                                    objImage[j][i].player = objImage[j][i+1].player;
-                                    objImage[j][i].shiftable =  objImage[j][i+1].shiftable;
-                                    objImage[j][i].identity = objImage[j][i+1].identity;
-
-                                    objImage[j][i+1].body = 0;
-                                    objImage[j][i+1].colectable = 0;
-                                    objImage[j][i+1].player = 0;
-                                    objImage[j][i+1].shiftable = 0;
-                                    objImage[j][i+1].identity = 'O';
-                                    objImage[j][i+1].cd = TEMPO_ESPERA;
-                                }
-                                break; 
-                            case 3:
-                                if((objImage[j+1][i].body == 0) && (objImage[j+1][i].identity != 'A') && (objImage[j+1][i].identity != 'D') && (objImage[j+1][i].identity != 'B') && ((j+1)*ESCALA < N_LINHAS*ESCALA)){
-                                    objImage[j][i].body = objImage[j+1][i].body;
-                                    objImage[j][i].colectable = objImage[j+1][i].colectable;
-                                    objImage[j][i].player = objImage[j+1][i].player;
-                                    objImage[j][i].shiftable =  objImage[j+1][i].shiftable;
-                                    objImage[j][i].identity = objImage[j+1][i].identity;
-
-                                    objImage[j+1][i].body = 0;
-                                    objImage[j+1][i].colectable = 0;
-                                    objImage[j+1][i].player = 0;
-                                    objImage[j+1][i].shiftable = 0;
-                                    objImage[j+1][i].identity = 'O';
-                                    objImage[j+1][i].cd = TEMPO_ESPERA;
-                                }
-                                break;                           
-                            }
-                        }else if(objImage[j][i].cd > 0){
-                            objImage[j][i].cd--;
-                        }
-                    }                
-                }
+                updateOgre(objImage,randomItem);
            
 
                 for(int i = 0; i < ALLEGRO_KEY_MAX; i++)
@@ -303,9 +363,11 @@ int main()
             case ALLEGRO_EVENT_KEY_DOWN:
                 tecla[event.keyboard.keycode] = KEY_SEEN | KEY_RELEASED;
                 break;
+
             case ALLEGRO_EVENT_KEY_UP:
                 tecla[event.keyboard.keycode] &= KEY_RELEASED;
                 break;
+                
             case ALLEGRO_EVENT_DISPLAY_CLOSE:
                 done = true;
                 break;
@@ -317,39 +379,7 @@ int main()
         if(redraw && al_is_event_queue_empty(queue))
         {
             al_clear_to_color(al_map_rgb(0, 0, 0));
-            for(i=0;i<N_COLUNAS;i++){
-                for(j=0;j<N_LINHAS;j++){
-                    switch(objImage[j][i].identity){
-                        case '#':
-                            al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(172, 172, 172));
-                            break;
-                        case 'J':
-                             al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(0, 0, 0));
-                            break;
-                        case 'C':
-                             al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(217,217,25));
-                            break;
-                        case 'M':
-                            al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(255, 247, 0));
-                            break;
-                        case 'B':
-                            al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(202, 135, 0));
-                            break;
-                        case 'O':
-                            al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(0,179,30));
-                            break;
-                        case 'A':
-                            al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(56 , 176, 222));
-                            break;
-                        case 'D':
-                            al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(255 , 0, 0));
-                            break;
-                        case ' ':
-                            al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(0, 0, 0));
-                            break;
-                    }
-                }                
-            }
+            drawMap(objImage);
             al_draw_filled_rectangle(x, y, x + ESCALA, y + ESCALA, al_map_rgb(153,102,255));
             al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 0, 0, "X: %.1f Y: %.1f", x, y);
             al_draw_textf(font, al_map_rgb(255, 255, 255), 24*ESCALA, 0, 0, "Pontuação: %d",scoreCounter);
