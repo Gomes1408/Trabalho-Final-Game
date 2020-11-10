@@ -383,7 +383,7 @@ int main()
         {
             al_clear_to_color(al_map_rgb(0, 0, 0));
             drawMap(objImage);
-            al_draw_filled_rectangle(x, y, x + ESCALA, y + ESCALA, al_map_rgb(153,102,255));
+            al_draw_filled_rectangle(x, y, x + ESCALA-1, y + ESCALA-1, al_map_rgb(153,102,255));
             al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 0, 0, "X: %.1f Y: %.1f", x, y);
             al_draw_textf(font, al_map_rgb(255, 255, 255), 24*ESCALA, 0, 0, "Pontuação: %d",scoreCounter);
             al_flip_display();
