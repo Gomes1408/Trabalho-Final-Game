@@ -11,7 +11,7 @@
 #define N_LINHAS 11
 #define N_COLUNAS 27
 #define TEMPO_ESPERA 20
-#define ESCALA 60
+#define ESCALA 50
 
 typedef struct 
 {
@@ -213,6 +213,25 @@ void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)
     }
 }
 
+void ogreHit(obj objImage[N_LINHAS][N_COLUNAS],float* pX,float* pY,char src[N_LINHAS][N_COLUNAS],int* playerHp,int* counter,int* menu)
+{  
+    int i,j;
+    for(i=0;i<N_COLUNAS;i++){
+        for(j=0;j<N_LINHAS;j++){
+            if((objImage[j][i].identity == 'O')&&(*pX/ESCALA == i)&&(*pY/ESCALA == j)){
+                loadMap(src,objImage,pX,pY);
+                *playerHp -= 1;
+            }
+            if(*playerHp == 0){
+                *menu = 1;
+                loadMap(src,objImage,pX,pY);                
+                *playerHp = 3;
+                *counter = 0;
+            }
+        }                
+    }
+}
+
 void drawMap(obj objImage[N_LINHAS][N_COLUNAS])
 {
     int i,j;
@@ -255,8 +274,10 @@ int main()
 {
     srand(time(NULL));
     int randomItem; 
-    int i,j,k;
+    int i,j;
+    int onMenu = 1;
     int scoreCounter = 00;
+    int hp = 3;
     int leverCooldown; 
     bool done = false;
     bool redraw = true;    
@@ -281,7 +302,7 @@ int main()
 
     inicializa(al_init(), "Allegro.");
     inicializa(al_install_keyboard(), "Teclado.-+");
-    ALLEGRO_TIMER* timer = al_create_timer(1.0 / 30.0);
+    ALLEGRO_TIMER* timer = al_create_timer(1.0 / 15.0);
     inicializa(timer, "Temporizador.");
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
     inicializa(queue, "Fila de eventos");
@@ -305,88 +326,164 @@ int main()
     al_start_timer(timer);
     while(1)
     {
-        randomItem =  rand() % 4;
-        al_wait_for_event(queue, &event);
+        if(onMenu){            
+            al_wait_for_event(queue, &event);                   
+              
+            switch(event.type)
+            {
+                case ALLEGRO_EVENT_TIMER:
+                    if(tecla[ALLEGRO_KEY_N]){
+                        loadMap(map,objImage,&x,&y);
+                        onMenu = 0;
+                    }
+                       
+                    if(tecla[ALLEGRO_KEY_C]){
+                        
+                    }
                 
-        if((objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'M') || (objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'C')){
-            scoreCounter = collectItem(scoreCounter,objImage, x, y);    
-        }
-
-        if(leverCooldown > 0){
-            leverCooldown--;
-        }
-
-        switch(event.type)
-        {
-            case ALLEGRO_EVENT_TIMER:
-                if(tecla[ALLEGRO_KEY_UP]){
-                    if(y == 0 || (objImage[(int)(y-ESCALA)/ESCALA][(int)x/ESCALA].body == 1)){}else{
-                        y-=ESCALA;
+                    if(tecla[ALLEGRO_KEY_S]){
+                        
                     }
-                }
-                   
-                if(tecla[ALLEGRO_KEY_DOWN]){
-                    if(y == 10*ESCALA || (objImage[(int)(y+ESCALA)/ESCALA][(int)x/ESCALA].body == 1)){}else{
-                        y+=ESCALA;
+                    
+                    if(tecla[ALLEGRO_KEY_V]){
+                        onMenu = 0;
                     }
-                }
-            
-                if(tecla[ALLEGRO_KEY_LEFT]){
-                    if(x == 0 || (objImage[(int)y/ESCALA][(int)(x-ESCALA)/ESCALA].body == 1)){}else{
-                        x-=ESCALA;
+                    
+                    if(tecla[ALLEGRO_KEY_Q]){
+                        done = true;
+                    }                                          
+    
+                    for(int i = 0; i < ALLEGRO_KEY_MAX; i++)
+                    {
+                        tecla[i] &= KEY_SEEN;
                     }
-                }
-                
-                if(tecla[ALLEGRO_KEY_RIGHT]){
-                    if(x == 26*ESCALA || (objImage[(int)y/ESCALA][(int)(x+ESCALA)/ESCALA].body == 1)){}else{
-                        x+=ESCALA;
-                    }
-                }
-                
-                if(tecla[ALLEGRO_KEY_ESCAPE]){
+                        
+    
+                    redraw = true;
+                    break;
+    
+                case ALLEGRO_EVENT_KEY_DOWN:
+                    tecla[event.keyboard.keycode] = KEY_SEEN | KEY_RELEASED;
+                    break;
+    
+                case ALLEGRO_EVENT_KEY_UP:
+                    tecla[event.keyboard.keycode] &= KEY_RELEASED;
+                    break;
+                    
+                case ALLEGRO_EVENT_DISPLAY_CLOSE:
                     done = true;
-                }
-
-                if((tecla[ALLEGRO_KEY_B] && ((objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)(y-ESCALA)/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)(y+ESCALA)/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)y/ESCALA][(int)(x-ESCALA)/ESCALA].identity == 'B')|| (objImage[(int)y/ESCALA][(int)(x+ESCALA)/ESCALA].identity == 'B'))) && (leverCooldown == 0)){
-                    leverActivate(&leverCooldown, objImage);
-                }
-
-                updateOgre(objImage,randomItem);
-           
-
-                for(int i = 0; i < ALLEGRO_KEY_MAX; i++)
-                    tecla[i] &= KEY_SEEN;
-
-                redraw = true;
+                    break;
+            }
+    
+            if(done)
                 break;
-
-            case ALLEGRO_EVENT_KEY_DOWN:
-                tecla[event.keyboard.keycode] = KEY_SEEN | KEY_RELEASED;
-                break;
-
-            case ALLEGRO_EVENT_KEY_UP:
-                tecla[event.keyboard.keycode] &= KEY_RELEASED;
-                break;
+    
+            if(redraw && al_is_event_queue_empty(queue))
+            {
+                al_clear_to_color(al_map_rgb(0, 0, 0));
+                al_draw_textf(font, al_map_rgb(255, 255, 255), 8*ESCALA, 5*ESCALA, 0, "Novo Jogo(N)|");   
+                al_draw_textf(font, al_map_rgb(255, 255, 255), 10.25*ESCALA, 5*ESCALA, 0, "Carregar Jogo(C)|"); 
+                al_draw_textf(font, al_map_rgb(255, 255, 255), 13.25*ESCALA, 5*ESCALA, 0, "Salvar Jogo(S)|"); 
+                al_draw_textf(font, al_map_rgb(255, 255, 255), 16*ESCALA, 5*ESCALA, 0, "Sair do Jogo(Q)|"); 
+                al_draw_textf(font, al_map_rgb(255, 255, 255), 19*ESCALA, 5*ESCALA, 0, "Voltar(V)");
+                al_draw_textf(font, al_map_rgb(255, 255, 255), 24*ESCALA, 0, 0, "Pontuação: %d",scoreCounter);             
+                al_flip_display();
+    
+                redraw = false;
+            }
+        }else{
+            randomItem =  rand() % 4;
+            al_wait_for_event(queue, &event);
+                    
+            if((objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'M') || (objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'C')){
+                scoreCounter = collectItem(scoreCounter,objImage, x, y);    
+            }
+    
+            if(leverCooldown > 0){
+                leverCooldown--;
+            }
+    
+            switch(event.type)
+            {
+                case ALLEGRO_EVENT_TIMER:
+                    if(tecla[ALLEGRO_KEY_UP]){
+                        if(y == 0 || (objImage[(int)(y-ESCALA)/ESCALA][(int)x/ESCALA].body == 1)){}else{
+                            y-=ESCALA;
+                        }
+                    }
+                       
+                    if(tecla[ALLEGRO_KEY_DOWN]){
+                        if(y == 10*ESCALA || (objImage[(int)(y+ESCALA)/ESCALA][(int)x/ESCALA].body == 1)){}else{
+                            y+=ESCALA;
+                        }
+                    }
                 
-            case ALLEGRO_EVENT_DISPLAY_CLOSE:
-                done = true;
+                    if(tecla[ALLEGRO_KEY_LEFT]){
+                        if(x == 0 || (objImage[(int)y/ESCALA][(int)(x-ESCALA)/ESCALA].body == 1)){}else{
+                            x-=ESCALA;
+                        }
+                    }
+                    
+                    if(tecla[ALLEGRO_KEY_RIGHT]){
+                        if(x == 26*ESCALA || (objImage[(int)y/ESCALA][(int)(x+ESCALA)/ESCALA].body == 1)){}else{
+                            x+=ESCALA;
+                        }
+                    }
+                    
+                    if(tecla[ALLEGRO_KEY_ESCAPE]){
+                        done = true;
+                    }
+
+                    if(tecla[ALLEGRO_KEY_TAB]){
+                        onMenu = 1;
+                    }
+    
+                    if((tecla[ALLEGRO_KEY_B] && ((objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)(y-ESCALA)/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)(y+ESCALA)/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)y/ESCALA][(int)(x-ESCALA)/ESCALA].identity == 'B')|| (objImage[(int)y/ESCALA][(int)(x+ESCALA)/ESCALA].identity == 'B'))) && (leverCooldown == 0)){
+                        leverActivate(&leverCooldown, objImage);
+                    }
+    
+                    updateOgre(objImage,randomItem);
+               
+                    ogreHit(objImage,&x,&y,map,&hp,&scoreCounter,&onMenu);
+    
+                    for(int i = 0; i < ALLEGRO_KEY_MAX; i++)
+                    {
+                        tecla[i] &= KEY_SEEN;
+                    }
+                        
+    
+                    redraw = true;
+                    break;
+    
+                case ALLEGRO_EVENT_KEY_DOWN:
+                    tecla[event.keyboard.keycode] = KEY_SEEN | KEY_RELEASED;
+                    break;
+    
+                case ALLEGRO_EVENT_KEY_UP:
+                    tecla[event.keyboard.keycode] &= KEY_RELEASED;
+                    break;
+                    
+                case ALLEGRO_EVENT_DISPLAY_CLOSE:
+                    done = true;
+                    break;
+            }
+    
+            if(done)
                 break;
-        }
-
-        if(done)
-            break;
-
-        if(redraw && al_is_event_queue_empty(queue))
-        {
-            al_clear_to_color(al_map_rgb(0, 0, 0));
-            drawMap(objImage);
-            al_draw_filled_rectangle(x, y, x + ESCALA, y + ESCALA, al_map_rgb(153,102,255));
-            al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 0, 0, "X: %.1f Y: %.1f", x, y);
-            al_draw_textf(font, al_map_rgb(255, 255, 255), 24*ESCALA, 0, 0, "Pontuação: %d",scoreCounter);
-            al_flip_display();
-
-            redraw = false;
-        }
+    
+            if(redraw && al_is_event_queue_empty(queue))
+            {
+                al_clear_to_color(al_map_rgb(0, 0, 0));
+                drawMap(objImage);
+                al_draw_filled_rectangle(x, y, x + ESCALA-1, y + ESCALA-1, al_map_rgb(153,102,255));
+                al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 0, 0, "X: %.1f Y: %.1f", x, y);
+                al_draw_textf(font, al_map_rgb(255, 255, 255), 24*ESCALA, 0, 0, "Pontuação: %d",scoreCounter);
+                al_draw_textf(font, al_map_rgb(255, 255, 255), 22*ESCALA, 0, 0, "Vida: %d",hp);
+                al_flip_display();
+    
+                redraw = false;
+            }
+        }        
     }
 
     al_destroy_font(font);
