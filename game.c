@@ -11,7 +11,7 @@
 #define N_LINHAS 11
 #define N_COLUNAS 27
 #define TEMPO_ESPERA 20
-#define ESCALA 60
+#define ESCALA 40
 
 typedef struct 
 {
@@ -281,7 +281,7 @@ int main()
 
     inicializa(al_init(), "Allegro.");
     inicializa(al_install_keyboard(), "Teclado.-+");
-    ALLEGRO_TIMER* timer = al_create_timer(1.0 / 30.0);
+    ALLEGRO_TIMER* timer = al_create_timer(1.0 / 15.0);
     inicializa(timer, "Temporizador.");
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
     inicializa(queue, "Fila de eventos");
