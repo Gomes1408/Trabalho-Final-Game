@@ -11,7 +11,7 @@
 #define N_LINHAS 11
 #define N_COLUNAS 27
 #define TEMPO_ESPERA 20
-#define ESCALA 50
+#define ESCALA 70
 
 typedef struct 
 {
@@ -33,11 +33,15 @@ void inicializa(bool teste, const char *descricao)
     exit(1);
 }
 
-void loadMap(char src[N_LINHAS][N_COLUNAS], obj objImage[N_LINHAS][N_COLUNAS], float* x, float* y){
+void loadMap(char src[N_LINHAS][N_COLUNAS], obj objImage[N_LINHAS][N_COLUNAS], float* x, float* y)
+{
     int i,j;
-    for(i=0;i<N_COLUNAS;i++){
-        for(j=0;j<N_LINHAS;j++){
-            switch(src[j][i]){
+    for(i=0;i<N_COLUNAS;i++)
+    {
+        for(j=0;j<N_LINHAS;j++)
+        {
+            switch(src[j][i])
+            {
                 case '#':
                     objImage[j][i].body = 1;
                     objImage[j][i].colectable = 0;
@@ -102,29 +106,40 @@ void loadMap(char src[N_LINHAS][N_COLUNAS], obj objImage[N_LINHAS][N_COLUNAS], f
     }
 }
 
-int collectItem(int counter,obj objImage[N_LINHAS][N_COLUNAS], int x, int y)
+int collectItem(int counter,obj objImage[N_LINHAS][N_COLUNAS], int x, int y, int* imortalCooldown)
 {
+    if(objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'M')
+    {
+        counter += 10;
+    }
+    if(counter % 100 == 0)
+    {
+        *imortalCooldown = (15 * 5);
+    }
     objImage[(int)y/ESCALA][(int)x/ESCALA].identity = ' ';
     objImage[(int)y/ESCALA][(int)x/ESCALA].body = 0;
     objImage[(int)y/ESCALA][(int)x/ESCALA].colectable = 0;
     objImage[(int)y/ESCALA][(int)x/ESCALA].player = 0;
-    objImage[(int)y/ESCALA][(int)x/ESCALA].shiftable = 0;
-    counter++;
-
+    objImage[(int)y/ESCALA][(int)x/ESCALA].shiftable = 0; 
+    
     return counter;
 }
 
-void leverActivate(int *cd,obj objImage[N_LINHAS][N_COLUNAS])
+void leverActivate(int* cd,obj objImage[N_LINHAS][N_COLUNAS])
 {
     int i,j;
-    for(i=0;i<N_COLUNAS;i++){
-        for(j=0;j<N_LINHAS;j++){
-            if(objImage[j][i].identity == 'A'){
+    for(i=0;i<N_COLUNAS;i++)
+    {
+        for(j=0;j<N_LINHAS;j++)
+        {
+            if(objImage[j][i].identity == 'A')
+            {
                 objImage[j][i].identity = 'D';
                 objImage[j][i].body = 1;
                 *cd = TEMPO_ESPERA;
             }
-            else if(objImage[j][i].identity == 'D'){
+            else if(objImage[j][i].identity == 'D')
+            {
                 objImage[j][i].identity = 'A';
                 objImage[j][i].body = 0;
                 *cd = TEMPO_ESPERA;
@@ -136,13 +151,17 @@ void leverActivate(int *cd,obj objImage[N_LINHAS][N_COLUNAS])
 void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)
 {  
     int i,j;
-    for(i=0;i<N_COLUNAS;i++){
-        for(j=0;j<N_LINHAS;j++){
-            if((objImage[j][i].identity == 'O')&&(objImage[j][i].cd == 0)){
+    for(i=0;i<N_COLUNAS;i++)
+    {
+        for(j=0;j<N_LINHAS;j++)
+        {
+            if((objImage[j][i].identity == 'O')&&(objImage[j][i].cd == 0))
+            {
                 switch (randomItem)
                 {
                     case 0:
-                        if((objImage[j][i-1].body == 0) && (objImage[j][i-1].identity != 'A') && (objImage[j][i-1].identity != 'D') && (objImage[j][i-1].identity != 'B') && ((i-1)*ESCALA > 00)){
+                        if((objImage[j][i-1].body == 0) && (objImage[j][i-1].identity != 'A') && (objImage[j][i-1].identity != 'D') && (objImage[j][i-1].identity != 'B') && ((i-1)*ESCALA > 00))
+                        {
                             objImage[j][i].body = objImage[j][i-1].body;
                             objImage[j][i].colectable = objImage[j][i-1].colectable;
                             objImage[j][i].player = objImage[j][i-1].player;
@@ -158,7 +177,8 @@ void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)
                         }
                         break; 
                     case 1:
-                        if((objImage[j-1][i].body == 0) && (objImage[j-1][i].identity != 'A') && (objImage[j-1][i].identity != 'D') && (objImage[j-1][i].identity != 'B')  && ((j-1)*ESCALA > 00)){
+                        if((objImage[j-1][i].body == 0) && (objImage[j-1][i].identity != 'A') && (objImage[j-1][i].identity != 'D') && (objImage[j-1][i].identity != 'B')  && ((j-1)*ESCALA > 00))
+                        {
                             objImage[j][i].body = objImage[j-1][i].body;
                             objImage[j][i].colectable = objImage[j-1][i].colectable;
                             objImage[j][i].player = objImage[j-1][i].player;
@@ -174,7 +194,8 @@ void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)
                         }
                         break; 
                     case 2:
-                        if((objImage[j][i+1].body == 0 ) && (objImage[j][i+1].identity != 'A') && (objImage[j][i+1].identity != 'D') && (objImage[j][i+1].identity != 'B') && ((i+1)*ESCALA < N_COLUNAS*ESCALA)){
+                        if((objImage[j][i+1].body == 0 ) && (objImage[j][i+1].identity != 'A') && (objImage[j][i+1].identity != 'D') && (objImage[j][i+1].identity != 'B') && ((i+1)*ESCALA < N_COLUNAS*ESCALA))
+                        {
                             objImage[j][i].body = objImage[j][i+1].body;
                             objImage[j][i].colectable = objImage[j][i+1].colectable;
                             objImage[j][i].player = objImage[j][i+1].player;
@@ -188,9 +209,10 @@ void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)
                             objImage[j][i+1].identity = 'O';
                             objImage[j][i+1].cd = TEMPO_ESPERA;
                         }
-                    break; 
+                        break; 
                     case 3:
-                        if((objImage[j+1][i].body == 0) && (objImage[j+1][i].identity != 'A') && (objImage[j+1][i].identity != 'D') && (objImage[j+1][i].identity != 'B') && ((j+1)*ESCALA < N_LINHAS*ESCALA)){
+                        if((objImage[j+1][i].body == 0) && (objImage[j+1][i].identity != 'A') && (objImage[j+1][i].identity != 'D') && (objImage[j+1][i].identity != 'B') && ((j+1)*ESCALA < N_LINHAS*ESCALA))
+                        {
                             objImage[j][i].body = objImage[j+1][i].body;
                             objImage[j][i].colectable = objImage[j+1][i].colectable;
                             objImage[j][i].player = objImage[j+1][i].player;
@@ -204,40 +226,81 @@ void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)
                             objImage[j+1][i].identity = 'O';
                             objImage[j+1][i].cd = TEMPO_ESPERA;
                         }
-                    break;                           
+                        break;                           
                 }
-            }else if(objImage[j][i].cd > 0){
+            }else if(objImage[j][i].cd > 0)
+            {
                 objImage[j][i].cd--;
             }
         }                
     }
 }
 
-void ogreHit(obj objImage[N_LINHAS][N_COLUNAS],float* pX,float* pY,char src[N_LINHAS][N_COLUNAS],int* playerHp,int* counter,int* menu)
+void ogreHit(obj objImage[N_LINHAS][N_COLUNAS],float* pX,float* pY,char src[N_LINHAS][N_COLUNAS],int* playerHp,int* counter,int* menu, int* imortalCooldown, int hasSword)
 {  
     int i,j;
-    for(i=0;i<N_COLUNAS;i++){
-        for(j=0;j<N_LINHAS;j++){
-            if((objImage[j][i].identity == 'O')&&(*pX/ESCALA == i)&&(*pY/ESCALA == j)){
-                loadMap(src,objImage,pX,pY);
-                *playerHp -= 1;
-            }
-            if(*playerHp == 0){
-                *menu = 1;
-                loadMap(src,objImage,pX,pY);                
-                *playerHp = 3;
-                *counter = 0;
-            }
+    for(i=0;i<N_COLUNAS;i++)
+    {
+        for(j=0;j<N_LINHAS;j++)
+        {
+            if((objImage[j][i].identity == 'O')&&(*pX/ESCALA == i)&&(*pY/ESCALA == j))
+            {
+                if(hasSword)
+                {
+                    objImage[(int)*pY/ESCALA][(int)*pX/ESCALA].identity = ' ';
+                    objImage[(int)*pY/ESCALA][(int)*pX/ESCALA].body = 0;
+                    objImage[(int)*pY/ESCALA][(int)*pX/ESCALA].colectable = 0;
+                    objImage[(int)*pY/ESCALA][(int)*pX/ESCALA].player = 0;
+                    objImage[(int)*pY/ESCALA][(int)*pX/ESCALA].shiftable = 0;
+                }else
+                {
+                    if(*imortalCooldown == 0)
+                    {
+                        loadMap(src,objImage,pX,pY);
+                        *playerHp -= 1;
+                        if(*playerHp == 0)
+                        {
+                            *menu = 1;
+                            loadMap(src,objImage,pX,pY);                
+                            *playerHp = 3;
+                            *counter = 0;
+                        }
+                    }    
+                }              
+            }            
         }                
+    }
+}
+
+void giveSword(obj objImage[N_LINHAS][N_COLUNAS], int* hasSword)
+{  
+    int i,j;
+    int totalCoins = 0;
+    for(i=0;i<N_COLUNAS;i++)
+    {
+        for(j=0;j<N_LINHAS;j++)
+        {
+            if(objImage[j][i].identity == 'M')
+            {
+                totalCoins++;
+            }           
+        }                
+    }
+    if(totalCoins == 0)
+    {
+        *hasSword = 1;
     }
 }
 
 void drawMap(obj objImage[N_LINHAS][N_COLUNAS])
 {
     int i,j;
-    for(i=0;i<N_COLUNAS;i++){
-        for(j=0;j<N_LINHAS;j++){
-            switch(objImage[j][i].identity){
+    for(i=0;i<N_COLUNAS;i++)
+    {
+        for(j=0;j<N_LINHAS;j++)
+        {
+            switch(objImage[j][i].identity)
+            {
                 case '#':
                     al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(172, 172, 172));
                     break;
@@ -279,6 +342,8 @@ int main()
     int scoreCounter = 00;
     int hp = 3;
     int leverCooldown; 
+    int imortalCooldown;
+    int hasSword = 0;
     bool done = false;
     bool redraw = true;    
     float x, y;    
@@ -286,22 +351,22 @@ int main()
     ALLEGRO_EVENT event;   
     
     char map[N_LINHAS][N_COLUNAS] ={{'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','O','#','#','#','#','#','#','#','#','#'},
-                                    {'#','J','M','#','#','M','M','B','M','#','M','M','M','M','#','M','#','#','#','#','#','#','#','M','M','C','#'},
-                                    {'O','#','A','M','M','M','#','#','M','#','M','#','#','#','#','M','#','#','#','#','#','#','#','#','#','#','#'},
-                                    {'#','#','C','#','#','M','#','M','M','M','M','M','M','#','#','M','#','#','#','#','#','#','#','#','#','#','#'},
-                                    {'#','#','O','#','#','M','#','M','O','O','M','#','#','#','#','M','#','#','#','#','#','#','#','#','#','#','O'},
-                                    {'#','M','D','#','#','M','M','M','M','M','M','M','M','M','#','M','M','M','M','#','#','#','#','#','#','#','#'},
-                                    {'#','#','#','M','M','M','#','M','M','M','#','#','M','#','#','M','#','M','M','M','M','#','M','#','#','#','#'},
-                                    {'#','#','#','M','#','#','#','M','#','M','#','#','M','#','#','M','#','M','#','#','#','#','M','#','#','#','#'},
-                                    {'#','#','#','M','#','#','#','M','M','#','#','#','M','#','#','M','#','M','M','M','#','#','M','#','#','#','#'},
-                                    {'#','#','#','M','#','#','#','M','#','M','#','#','M','#','#','M','#','M','#','#','#','#','M','#','#','#','#'},
-                                    {'#','O','#','M','M','M','#','M','#','#','M','#','M','M','M','M','#','M','M','M','M','#','M','M','M','M','#'}}; 
+                                    {'#','J','M','#','#','#','#','B','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','C','#'},
+                                    {'O','#','A','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'},
+                                    {'#','#','C','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'},
+                                    {'#','#','O','#','#','#','#','#','O','O','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','O'},
+                                    {'#','#','D','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'},
+                                    {'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'},
+                                    {'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'},
+                                    {'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'},
+                                    {'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'},
+                                    {'#','O','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'}}; 
 
     obj objImage[N_LINHAS][N_COLUNAS];    
     loadMap(map,objImage,&x,&y);
 
     inicializa(al_init(), "Allegro.");
-    inicializa(al_install_keyboard(), "Teclado.-+");
+    inicializa(al_install_keyboard(), "Teclado.");
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / 15.0);
     inicializa(timer, "Temporizador.");
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
@@ -326,30 +391,36 @@ int main()
     al_start_timer(timer);
     while(1)
     {
-        if(onMenu){            
+        if(onMenu)
+        {            
             al_wait_for_event(queue, &event);                   
               
             switch(event.type)
             {
                 case ALLEGRO_EVENT_TIMER:
-                    if(tecla[ALLEGRO_KEY_N]){
+                    if(tecla[ALLEGRO_KEY_N])
+                    {
                         loadMap(map,objImage,&x,&y);
                         onMenu = 0;
                     }
                        
-                    if(tecla[ALLEGRO_KEY_C]){
+                    if(tecla[ALLEGRO_KEY_C])
+                    {
                         
                     }
                 
-                    if(tecla[ALLEGRO_KEY_S]){
+                    if(tecla[ALLEGRO_KEY_S])
+                    {
                         
                     }
                     
-                    if(tecla[ALLEGRO_KEY_V]){
+                    if(tecla[ALLEGRO_KEY_V])
+                    {
                         onMenu = 0;
                     }
                     
-                    if(tecla[ALLEGRO_KEY_Q]){
+                    if(tecla[ALLEGRO_KEY_Q])
+                    {
                         done = true;
                     }                                          
     
@@ -375,8 +446,9 @@ int main()
                     break;
             }
     
-            if(done)
+            if(done){
                 break;
+            }               
     
             if(redraw && al_is_event_queue_empty(queue))
             {
@@ -391,60 +463,82 @@ int main()
     
                 redraw = false;
             }
-        }else{
+
+        }else
+        {
             randomItem =  rand() % 4;
             al_wait_for_event(queue, &event);
+
+            giveSword(objImage,&hasSword);
                     
-            if((objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'M') || (objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'C')){
-                scoreCounter = collectItem(scoreCounter,objImage, x, y);    
+            if((objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'M') || (objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'C'))
+            {
+                scoreCounter = collectItem(scoreCounter,objImage, x, y, &imortalCooldown);    
             }
     
-            if(leverCooldown > 0){
+            if(leverCooldown > 0)
+            {
                 leverCooldown--;
+            }
+
+            if(imortalCooldown > 0)
+            {
+                imortalCooldown--;
             }
     
             switch(event.type)
             {
                 case ALLEGRO_EVENT_TIMER:
-                    if(tecla[ALLEGRO_KEY_UP]){
-                        if(y == 0 || (objImage[(int)(y-ESCALA)/ESCALA][(int)x/ESCALA].body == 1)){}else{
+                    if(tecla[ALLEGRO_KEY_UP])
+                    {
+                        if(y == 0 || (objImage[(int)(y-ESCALA)/ESCALA][(int)x/ESCALA].body == 1)){}else
+                        {
                             y-=ESCALA;
                         }
                     }
                        
-                    if(tecla[ALLEGRO_KEY_DOWN]){
-                        if(y == 10*ESCALA || (objImage[(int)(y+ESCALA)/ESCALA][(int)x/ESCALA].body == 1)){}else{
+                    if(tecla[ALLEGRO_KEY_DOWN])
+                    {
+                        if(y == 10*ESCALA || (objImage[(int)(y+ESCALA)/ESCALA][(int)x/ESCALA].body == 1)){}else
+                        {
                             y+=ESCALA;
                         }
                     }
                 
-                    if(tecla[ALLEGRO_KEY_LEFT]){
-                        if(x == 0 || (objImage[(int)y/ESCALA][(int)(x-ESCALA)/ESCALA].body == 1)){}else{
+                    if(tecla[ALLEGRO_KEY_LEFT])
+                    {
+                        if(x == 0 || (objImage[(int)y/ESCALA][(int)(x-ESCALA)/ESCALA].body == 1)){}else
+                        {
                             x-=ESCALA;
                         }
                     }
                     
-                    if(tecla[ALLEGRO_KEY_RIGHT]){
-                        if(x == 26*ESCALA || (objImage[(int)y/ESCALA][(int)(x+ESCALA)/ESCALA].body == 1)){}else{
+                    if(tecla[ALLEGRO_KEY_RIGHT])
+                    {
+                        if(x == 26*ESCALA || (objImage[(int)y/ESCALA][(int)(x+ESCALA)/ESCALA].body == 1)){}else
+                        {
                             x+=ESCALA;
                         }
                     }
                     
-                    if(tecla[ALLEGRO_KEY_ESCAPE]){
+                    if(tecla[ALLEGRO_KEY_ESCAPE])
+                    {
                         done = true;
                     }
 
-                    if(tecla[ALLEGRO_KEY_TAB]){
+                    if(tecla[ALLEGRO_KEY_TAB])
+                    {
                         onMenu = 1;
                     }
     
-                    if((tecla[ALLEGRO_KEY_B] && ((objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)(y-ESCALA)/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)(y+ESCALA)/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)y/ESCALA][(int)(x-ESCALA)/ESCALA].identity == 'B')|| (objImage[(int)y/ESCALA][(int)(x+ESCALA)/ESCALA].identity == 'B'))) && (leverCooldown == 0)){
+                    if((tecla[ALLEGRO_KEY_B] && ((objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)(y-ESCALA)/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)(y+ESCALA)/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)y/ESCALA][(int)(x-ESCALA)/ESCALA].identity == 'B')|| (objImage[(int)y/ESCALA][(int)(x+ESCALA)/ESCALA].identity == 'B'))) && (leverCooldown == 0))
+                    {
                         leverActivate(&leverCooldown, objImage);
                     }
     
                     updateOgre(objImage,randomItem);
                
-                    ogreHit(objImage,&x,&y,map,&hp,&scoreCounter,&onMenu);
+                    ogreHit(objImage,&x,&y,map,&hp,&scoreCounter,&onMenu,&imortalCooldown,hasSword);
     
                     for(int i = 0; i < ALLEGRO_KEY_MAX; i++)
                     {
@@ -468,14 +562,32 @@ int main()
                     break;
             }
     
-            if(done)
+            if(done){
                 break;
+            }
     
             if(redraw && al_is_event_queue_empty(queue))
             {
                 al_clear_to_color(al_map_rgb(0, 0, 0));
                 drawMap(objImage);
-                al_draw_filled_rectangle(x, y, x + ESCALA-1, y + ESCALA-1, al_map_rgb(153,102,255));
+                if(hasSword)
+                {
+                    al_draw_textf(font, al_map_rgb(255, 255, 255), 12*ESCALA, 0, 0, "Excalibur ativada.");
+                }
+                if(imortalCooldown > 0)
+                {
+                    if(imortalCooldown % 2 == 0)
+                    {
+                        al_draw_filled_rectangle(x, y, x + ESCALA-1, y + ESCALA-1, al_map_rgb(43,255,0));
+                    }else
+                    {
+                        al_draw_filled_rectangle(x, y, x + ESCALA-1, y + ESCALA-1, al_map_rgb(255,0,0));
+                    }
+                    
+                }else
+                {
+                    al_draw_filled_rectangle(x, y, x + ESCALA-1, y + ESCALA-1, al_map_rgb(153,102,255));
+                }              
                 al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 0, 0, "X: %.1f Y: %.1f", x, y);
                 al_draw_textf(font, al_map_rgb(255, 255, 255), 24*ESCALA, 0, 0, "Pontuação: %d",scoreCounter);
                 al_draw_textf(font, al_map_rgb(255, 255, 255), 22*ESCALA, 0, 0, "Vida: %d",hp);
