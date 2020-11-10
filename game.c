@@ -238,7 +238,7 @@ void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)
 
 void ogreHit(obj objImage[N_LINHAS][N_COLUNAS],float* pX,float* pY,char src[N_LINHAS][N_COLUNAS],int* playerHp,int* counter,int* menu, int* imortalCooldown, int hasSword)
 {  
-    int i,j;
+    int i,j,k,l;
     for(i=0;i<N_COLUNAS;i++)
     {
         for(j=0;j<N_LINHAS;j++)
@@ -255,9 +255,21 @@ void ogreHit(obj objImage[N_LINHAS][N_COLUNAS],float* pX,float* pY,char src[N_LI
                 }else
                 {
                     if(*imortalCooldown == 0)
-                    {
-                        loadMap(src,objImage,pX,pY);
+                    {   
+                        for(k=0;k<N_COLUNAS;k++)
+                        {
+                            for(l=0;l<N_LINHAS;l++)
+                            {
+                                if(src[l][k] == 'J')
+                                {
+                                    *pX = k * ESCALA;
+                                    *pY = l * ESCALA;
+                                }
+                            }
+                        } 
+
                         *playerHp -= 1;
+
                         if(*playerHp == 0)
                         {
                             *menu = 1;
@@ -353,7 +365,7 @@ int main()
     char map[N_LINHAS][N_COLUNAS] ={{'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','O','#','#','#','#','#','#','#','#','#'},
                                     {'#','J','M','#','#','#','#','B','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','C','#'},
                                     {'O','#','A','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'},
-                                    {'#','#','C','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'},
+                                    {'#','#','C','#','#','M','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'},
                                     {'#','#','O','#','#','#','#','#','O','O','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','O'},
                                     {'#','#','D','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'},
                                     {'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'},
@@ -578,7 +590,7 @@ int main()
                 {
                     if(imortalCooldown % 2 == 0)
                     {
-                        al_draw_filled_rectangle(x, y, x + ESCALA-1, y + ESCALA-1, al_map_rgb(43,255,0));
+                        al_draw_filled_rectangle(x, y, x + ESCALA-1, y + ESCALA-1, al_map_rgb(  43,255,0));
                     }else
                     {
                         al_draw_filled_rectangle(x, y, x + ESCALA-1, y + ESCALA-1, al_map_rgb(255,0,0));
