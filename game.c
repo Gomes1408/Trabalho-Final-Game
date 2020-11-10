@@ -255,7 +255,7 @@ int main()
 {
     srand(time(NULL));
     int randomItem; 
-    int i,j,k;
+    int i,j;
     int scoreCounter = 00;
     int leverCooldown; 
     bool done = false;
@@ -355,7 +355,10 @@ int main()
            
 
                 for(int i = 0; i < ALLEGRO_KEY_MAX; i++)
+                {
                     tecla[i] &= KEY_SEEN;
+                }
+                    
 
                 redraw = true;
                 break;
