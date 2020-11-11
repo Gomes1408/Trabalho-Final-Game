@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 #include <allegro5/allegro5.h>
 #include <allegro5/allegro_font.h>
@@ -12,6 +13,9 @@
 #define N_COLUNAS 27
 #define TEMPO_ESPERA 20
 #define ESCALA 70
+#define SAVEFILE_ID "currentSave.bin"
+#define MAP "mapa"
+#define MAPENDFILE_ID ".txt"
 
 typedef struct 
 {
@@ -24,6 +28,18 @@ typedef struct
         char identity;
 }obj;
 
+typedef struct 
+{
+        obj objImage[N_LINHAS][N_COLUNAS];
+        char src[N_LINHAS][N_COLUNAS];       
+        int cScoreCounter;
+        int cHp;
+        int cLeverCooldown; 
+        int cImortalCooldown;
+        int cHasSword;
+        int cLevel;
+        float cX, cY;  
+}mapState;
 
 void inicializa(bool teste, const char *descricao)
 {
@@ -252,6 +268,7 @@ void ogreHit(obj objImage[N_LINHAS][N_COLUNAS],float* pX,float* pY,char src[N_LI
                     objImage[(int)*pY/ESCALA][(int)*pX/ESCALA].colectable = 0;
                     objImage[(int)*pY/ESCALA][(int)*pX/ESCALA].player = 0;
                     objImage[(int)*pY/ESCALA][(int)*pX/ESCALA].shiftable = 0;
+                    *counter += 100;
                 }else
                 {
                     if(*imortalCooldown == 0)
@@ -345,6 +362,100 @@ void drawMap(obj objImage[N_LINHAS][N_COLUNAS])
     }
 }
 
+void saveMap(FILE *arq, obj objImage[N_LINHAS][N_COLUNAS], char src[N_LINHAS][N_COLUNAS], int cScoreCounter, int cHp, int cLeverCooldown, int cImortalCooldown, int cHasSword, float cX, float cY, int cLevel)
+{    
+    mapState cMapState;
+
+    cMapState.cHasSword = cHasSword;
+    cMapState.cImortalCooldown = cImortalCooldown;
+    cMapState.cLeverCooldown = cLeverCooldown;
+    cMapState.cHp = cHp;
+    cMapState.cScoreCounter = cScoreCounter;
+    cMapState.cX = cX;
+    cMapState.cY = cY;
+    cMapState.cLevel = cLevel;
+
+    memcpy(cMapState.src,src,N_LINHAS*N_COLUNAS*sizeof(char));
+    memcpy(cMapState.objImage,objImage,N_LINHAS*N_COLUNAS*sizeof(obj));  
+
+    arq = fopen(SAVEFILE_ID,"wb");//Abertura de arquivo, gravação e sinalização.
+    if(arq == NULL){
+        printf("Erro na abertura do arquivo dos funcionários.");
+    }else{
+        if(fwrite(&cMapState,sizeof(mapState),1,arq) != 1){
+            printf("Erro na escrita.");
+        }
+    }
+    fclose(arq);   
+}
+
+void loadSave(FILE *arq, obj objImage[N_LINHAS][N_COLUNAS], char src[N_LINHAS][N_COLUNAS], int* cScoreCounter, int* cHp, int* cLeverCooldown, int* cImortalCooldown, int* cHasSword, float* cX, float* cY, int* cLevel)
+{    
+    mapState cMapState;   
+
+    arq = fopen(SAVEFILE_ID,"rb+");//Abre o stream do arquivo.   
+
+    if(fread(&cMapState,sizeof(mapState),1,arq)){        
+        *cHasSword = cMapState.cHasSword;        
+        *cImortalCooldown = cMapState.cImortalCooldown;
+        *cLeverCooldown = cMapState.cLeverCooldown;
+        *cHp = cMapState.cHp;
+        *cScoreCounter = cMapState.cScoreCounter;
+        *cX = cMapState.cX;
+        *cY = cMapState.cY;
+        *cLevel = cMapState.cLevel;
+
+        memcpy(src,cMapState.src,N_LINHAS*N_COLUNAS*sizeof(char));
+        memcpy(objImage,cMapState.objImage,N_LINHAS*N_COLUNAS*sizeof(obj)); 
+    } 
+
+    fclose(arq);   
+}
+
+void readMap(FILE *arq,  char src[N_LINHAS][N_COLUNAS],char fileName[])
+{    
+    int i,j;
+
+    arq = fopen(fileName,"rb+");//Abre o stream do arquivo.
+
+    for(i=0;i<N_LINHAS;i++)
+    {
+        for(j=0;j<N_COLUNAS;j++)
+        {
+            src[i][j] = fgetc(arq);           
+            if(j == 26){
+                fseek(arq,2,SEEK_CUR);
+            }         
+        }
+    }
+    fclose(arq);   
+}
+
+int checkLevel(obj objImage[N_LINHAS][N_COLUNAS], int* levelNumber)
+{
+    int totalKeys = 0;
+    int i,j;
+    int intReturn = 0;
+    for(i=0;i<N_LINHAS;i++)
+    {
+        for(j=0;j<N_COLUNAS;j++)
+        {
+            if(objImage[i][j].identity == 'C')
+            {
+                totalKeys++;
+            }
+        }
+    }
+    
+    if(totalKeys == 0)
+    {
+        *levelNumber += 1;
+        intReturn = 1;
+    }
+    
+    return intReturn;
+}
+
 int main()
 {
     srand(time(NULL));
@@ -356,27 +467,20 @@ int main()
     int leverCooldown; 
     int imortalCooldown;
     int hasSword = 0;
+    int currentLevel = 1;    
     bool done = false;
     bool redraw = true;    
     float x, y;    
+    FILE *saveLocation;
     unsigned char tecla[ALLEGRO_KEY_MAX];
+    char mapNumber[3];
+    char mapFile[10];
     ALLEGRO_EVENT event;   
     
-    char map[N_LINHAS][N_COLUNAS] ={{'#','M','M','M','M','M','M','#','#','#','#','#','#','#','#','#','#','O','#','#','#','#','#','#','#','#','#'},
-                                    {'#','J','M','M','M','M','M','B','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','C','#'},
-                                    {'O','#','A','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'},
-                                    {'#','#','C','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'},
-                                    {'#','#','O','#','#','#','#','#','O','O','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','O'},
-                                    {'#','#','D','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'},
-                                    {'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'},
-                                    {'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'},
-                                    {'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'},
-                                    {'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'},
-                                    {'#','O','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'}}; 
+    char map[N_LINHAS][N_COLUNAS];
 
-    obj objImage[N_LINHAS][N_COLUNAS];    
-    loadMap(map,objImage,&x,&y);
-
+    obj objImage[N_LINHAS][N_COLUNAS];     
+    
     inicializa(al_init(), "Allegro.");
     inicializa(al_install_keyboard(), "Teclado.");
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / 15.0);
@@ -412,18 +516,30 @@ int main()
                 case ALLEGRO_EVENT_TIMER:
                     if(tecla[ALLEGRO_KEY_N])
                     {
-                        loadMap(map,objImage,&x,&y);
-                        onMenu = 0;
+                        strcpy(mapFile,MAP);                         
+                        snprintf(mapNumber,sizeof(mapNumber),"%02d",currentLevel);                      
+                        strcat(mapFile,mapNumber);                                                                                           
+                        strcat(mapFile,MAPENDFILE_ID);                                 
+                        readMap(saveLocation,map,mapFile);
+                        loadMap(map,objImage,&x,&y);                       
+                        scoreCounter = 00;
+                        hp = 3;
+                        leverCooldown = 00; 
+                        imortalCooldown = 00;
+                        hasSword = 0;
+                        onMenu = 0;                     
                     }
                        
                     if(tecla[ALLEGRO_KEY_C])
                     {
-                        
+                        loadSave(saveLocation,objImage,map,&scoreCounter,&hp,&leverCooldown,&imortalCooldown,&hasSword,&x,&y,&currentLevel);
+                        onMenu = 0;
                     }
                 
                     if(tecla[ALLEGRO_KEY_S])
                     {
-                        
+                        saveMap(saveLocation,objImage,map,scoreCounter,hp,leverCooldown,imortalCooldown,hasSword,x,y,currentLevel);
+                        onMenu = 0;
                     }
                     
                     if(tecla[ALLEGRO_KEY_V])
@@ -470,7 +586,8 @@ int main()
                 al_draw_textf(font, al_map_rgb(255, 255, 255), 13.25*ESCALA, 5*ESCALA, 0, "Salvar Jogo(S)|"); 
                 al_draw_textf(font, al_map_rgb(255, 255, 255), 16*ESCALA, 5*ESCALA, 0, "Sair do Jogo(Q)|"); 
                 al_draw_textf(font, al_map_rgb(255, 255, 255), 19*ESCALA, 5*ESCALA, 0, "Voltar(V)");
-                al_draw_textf(font, al_map_rgb(255, 255, 255), 24*ESCALA, 0, 0, "Pontuação: %d",scoreCounter);             
+                al_draw_textf(font, al_map_rgb(255, 255, 255), 24*ESCALA, 0, 0, "Pontuação: %d",scoreCounter);   
+                al_draw_textf(font, al_map_rgb(255, 255, 255), 5*ESCALA, 0, 0, "%s",mapFile);          
                 al_flip_display();
     
                 redraw = false;
@@ -480,6 +597,29 @@ int main()
         {
             randomItem =  rand() % 4;
             al_wait_for_event(queue, &event);
+
+            if(checkLevel(objImage, &currentLevel))
+            {       
+                if(currentLevel > 99)
+                {
+                    currentLevel = 1;
+                }         
+                strcpy(mapFile,MAP);                          
+                snprintf(mapNumber,sizeof(mapNumber),"%02d",currentLevel);                      
+                strcat(mapFile,mapNumber);                                                                                             
+                strcat(mapFile,MAPENDFILE_ID);  
+                puts(mapFile);                                                
+                readMap(saveLocation,map,mapFile);
+                loadMap(map,objImage,&x,&y);                
+                hp = 3;
+                leverCooldown = 00; 
+                imortalCooldown = 00;
+                hasSword = 0;                        
+            }
+
+            updateOgre(objImage,randomItem);
+               
+            ogreHit(objImage,&x,&y,map,&hp,&scoreCounter,&onMenu,&imortalCooldown,hasSword);
 
             giveSword(objImage,&hasSword);
                     
@@ -547,11 +687,7 @@ int main()
                     {
                         leverActivate(&leverCooldown, objImage);
                     }
-    
-                    updateOgre(objImage,randomItem);
-               
-                    ogreHit(objImage,&x,&y,map,&hp,&scoreCounter,&onMenu,&imortalCooldown,hasSword);
-    
+                            
                     for(int i = 0; i < ALLEGRO_KEY_MAX; i++)
                     {
                         tecla[i] &= KEY_SEEN;
@@ -601,7 +737,7 @@ int main()
                     al_draw_filled_rectangle(x, y, x + ESCALA-1, y + ESCALA-1, al_map_rgb(153,102,255));
                 }              
                 al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 0, 0, "X: %.1f Y: %.1f", x, y);
-                al_draw_textf(font, al_map_rgb(255, 255, 255), 24*ESCALA, 0, 0, "Pontuação: %d",scoreCounter);
+                al_draw_textf(font, al_map_rgb(255, 255, 255), 24*ESCALA, 0, 0, "Pontuação: %d",scoreCounter);                
                 al_draw_textf(font, al_map_rgb(255, 255, 255), 22*ESCALA, 0, 0, "Vida: %d",hp);
                 al_flip_display();
     
