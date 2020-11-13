@@ -26,6 +26,7 @@ typedef struct
         int player;
         int cd;
         char identity;
+        char lastStep;
 }obj;
 
 typedef struct
@@ -71,6 +72,7 @@ void loadMap(char src[N_LINHAS][N_COLUNAS], obj objImage[N_LINHAS][N_COLUNAS], f
                     objImage[j][i].player = 0;
                     objImage[j][i].shiftable = 0;
                     objImage[j][i].identity = 'C';
+                    objImage[j][i].lastStep = 'C';
                     break;
                 case 'A':
                     objImage[j][i].body = 0;
@@ -92,6 +94,7 @@ void loadMap(char src[N_LINHAS][N_COLUNAS], obj objImage[N_LINHAS][N_COLUNAS], f
                     objImage[j][i].player = 1;
                     objImage[j][i].shiftable = 0;
                     objImage[j][i].identity = 'J';
+                    objImage[j][i].lastStep = 'J';
                     *y = j*ESCALA;
                     *x = i*ESCALA;
                     break;
@@ -101,6 +104,7 @@ void loadMap(char src[N_LINHAS][N_COLUNAS], obj objImage[N_LINHAS][N_COLUNAS], f
                     objImage[j][i].player = 0;
                     objImage[j][i].shiftable = 0;
                     objImage[j][i].identity = 'M';
+                    objImage[j][i].lastStep = 'M';
                     break;
                 case 'B':
                     objImage[j][i].body = 0;
@@ -137,6 +141,7 @@ int collectItem(int counter,obj objImage[N_LINHAS][N_COLUNAS], int x, int y, int
     objImage[(int)y/ESCALA][(int)x/ESCALA].colectable = 0;
     objImage[(int)y/ESCALA][(int)x/ESCALA].player = 0;
     objImage[(int)y/ESCALA][(int)x/ESCALA].shiftable = 0;
+    objImage[(int)y/ESCALA][(int)x/ESCALA].lastStep = ' ';
 
     return counter;
 }
@@ -178,11 +183,15 @@ void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)
                     case 0:
                         if((objImage[j][i-1].body == 0) && (objImage[j][i-1].identity != 'A') && (objImage[j][i-1].identity != 'D') && (objImage[j][i-1].identity != 'B') && ((i-1)*ESCALA > 00))
                         {
+                            objImage[j][i-1].lastStep = objImage[j][i-1].identity;
+                            
+
                             objImage[j][i].body = objImage[j][i-1].body;
                             objImage[j][i].colectable = objImage[j][i-1].colectable;
                             objImage[j][i].player = objImage[j][i-1].player;
-                            objImage[j][i].shiftable =  objImage[j][i-1].shiftable;
-                            objImage[j][i].identity = objImage[j][i-1].identity;
+                            objImage[j][i].shiftable =  objImage[j][i-1].shiftable;                            
+                            objImage[j][i].identity = objImage[j][i].lastStep;
+                                                 
 
                             objImage[j][i-1].body = 0;
                             objImage[j][i-1].colectable = 0;
@@ -195,12 +204,14 @@ void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)
                     case 1:
                         if((objImage[j-1][i].body == 0) && (objImage[j-1][i].identity != 'A') && (objImage[j-1][i].identity != 'D') && (objImage[j-1][i].identity != 'B')  && ((j-1)*ESCALA > 00))
                         {
+                            objImage[j-1][i].lastStep = objImage[j-1][i].identity;
+
                             objImage[j][i].body = objImage[j-1][i].body;
                             objImage[j][i].colectable = objImage[j-1][i].colectable;
                             objImage[j][i].player = objImage[j-1][i].player;
-                            objImage[j][i].shiftable =  objImage[j-1][i].shiftable;
-                            objImage[j][i].identity = objImage[j-1][i].identity;
-
+                            objImage[j][i].shiftable =  objImage[j-1][i].shiftable;                          
+                            objImage[j][i].identity = objImage[j][i].lastStep;
+                          
                             objImage[j-1][i].body = 0;
                             objImage[j-1][i].colectable = 0;
                             objImage[j-1][i].player = 0;
@@ -212,12 +223,15 @@ void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)
                     case 2:
                         if((objImage[j][i+1].body == 0 ) && (objImage[j][i+1].identity != 'A') && (objImage[j][i+1].identity != 'D') && (objImage[j][i+1].identity != 'B') && ((i+1)*ESCALA < N_COLUNAS*ESCALA))
                         {
+                            objImage[j][i+1].lastStep = objImage[j][i+1].identity;
+
                             objImage[j][i].body = objImage[j][i+1].body;
                             objImage[j][i].colectable = objImage[j][i+1].colectable;
                             objImage[j][i].player = objImage[j][i+1].player;
-                            objImage[j][i].shiftable =  objImage[j][i+1].shiftable;
-                            objImage[j][i].identity = objImage[j][i+1].identity;
-
+                            objImage[j][i].shiftable =  objImage[j][i+1].shiftable;                           
+                            objImage[j][i].identity = objImage[j][i].lastStep;
+                            
+                            
                             objImage[j][i+1].body = 0;
                             objImage[j][i+1].colectable = 0;
                             objImage[j][i+1].player = 0;
@@ -229,12 +243,15 @@ void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)
                     case 3:
                         if((objImage[j+1][i].body == 0) && (objImage[j+1][i].identity != 'A') && (objImage[j+1][i].identity != 'D') && (objImage[j+1][i].identity != 'B') && ((j+1)*ESCALA < N_LINHAS*ESCALA))
                         {
+                            objImage[j+1][i].lastStep = objImage[j+1][i].identity;
+
                             objImage[j][i].body = objImage[j+1][i].body;
                             objImage[j][i].colectable = objImage[j+1][i].colectable;
                             objImage[j][i].player = objImage[j+1][i].player;
-                            objImage[j][i].shiftable =  objImage[j+1][i].shiftable;
-                            objImage[j][i].identity = objImage[j+1][i].identity;
-
+                            objImage[j][i].shiftable =  objImage[j+1][i].shiftable;                            
+                            objImage[j][i].identity = objImage[j][i].lastStep;
+                            
+                            
                             objImage[j+1][i].body = 0;
                             objImage[j+1][i].colectable = 0;
                             objImage[j+1][i].player = 0;
