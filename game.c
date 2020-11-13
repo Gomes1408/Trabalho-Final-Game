@@ -181,7 +181,7 @@ void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)
                 switch (randomItem)
                 {
                     case 0:
-                        if((objImage[j][i-1].body == 0) && (objImage[j][i-1].identity != 'A') && (objImage[j][i-1].identity != 'D') && (objImage[j][i-1].identity != 'B') && ((i-1)*ESCALA > 00))
+                        if((objImage[j][i-1].body == 0) && (objImage[j][i-1].identity != 'A')&& (objImage[j][i-1].identity != 'O') && (objImage[j][i-1].identity != 'D') && (objImage[j][i-1].identity != 'B') && ((i-1)*ESCALA > 00))
                         {
                             objImage[j][i-1].lastStep = objImage[j][i-1].identity;
                             
@@ -202,7 +202,7 @@ void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)
                         }
                         break;
                     case 1:
-                        if((objImage[j-1][i].body == 0) && (objImage[j-1][i].identity != 'A') && (objImage[j-1][i].identity != 'D') && (objImage[j-1][i].identity != 'B')  && ((j-1)*ESCALA > 00))
+                        if((objImage[j-1][i].body == 0) && (objImage[j-1][i].identity != 'A') && (objImage[j-1][i].identity != 'O') && (objImage[j-1][i].identity != 'D') && (objImage[j-1][i].identity != 'B')  && ((j-1)*ESCALA > 00))
                         {
                             objImage[j-1][i].lastStep = objImage[j-1][i].identity;
 
@@ -221,7 +221,7 @@ void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)
                         }
                         break;
                     case 2:
-                        if((objImage[j][i+1].body == 0 ) && (objImage[j][i+1].identity != 'A') && (objImage[j][i+1].identity != 'D') && (objImage[j][i+1].identity != 'B') && ((i+1)*ESCALA < N_COLUNAS*ESCALA))
+                        if((objImage[j][i+1].body == 0 ) && (objImage[j][i+1].identity != 'A') && (objImage[j][i+1].identity != 'D') && (objImage[j][i+1].identity != 'O') && (objImage[j][i+1].identity != 'B') && ((i+1)*ESCALA < N_COLUNAS*ESCALA))
                         {
                             objImage[j][i+1].lastStep = objImage[j][i+1].identity;
 
@@ -241,7 +241,7 @@ void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)
                         }
                         break;
                     case 3:
-                        if((objImage[j+1][i].body == 0) && (objImage[j+1][i].identity != 'A') && (objImage[j+1][i].identity != 'D') && (objImage[j+1][i].identity != 'B') && ((j+1)*ESCALA < N_LINHAS*ESCALA))
+                        if((objImage[j+1][i].body == 0) && (objImage[j+1][i].identity != 'A') && (objImage[j+1][i].identity != 'D') && (objImage[j+1][i].identity != 'O') &&(objImage[j+1][i].identity != 'B') && ((j+1)*ESCALA < N_LINHAS*ESCALA))
                         {
                             objImage[j+1][i].lastStep = objImage[j+1][i].identity;
 
@@ -533,6 +533,7 @@ int main()
                 case ALLEGRO_EVENT_TIMER:
                     if(tecla[ALLEGRO_KEY_N])
                     {
+                        currentLevel = 1;
                         strcpy(mapFile,MAP);
                         snprintf(mapNumber,sizeof(mapNumber),"%02d",currentLevel);
                         strcat(mapFile,mapNumber);
