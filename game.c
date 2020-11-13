@@ -12,12 +12,12 @@
 #define N_LINHAS 11
 #define N_COLUNAS 27
 #define TEMPO_ESPERA 20
-#define ESCALA 70
+#define ESCALA 50
 #define SAVEFILE_ID "currentSave.bin"
 #define MAP "mapa"
 #define MAPENDFILE_ID ".txt"
 
-typedef struct 
+typedef struct
 {
         int body;
         int shiftable;
@@ -28,17 +28,17 @@ typedef struct
         char identity;
 }obj;
 
-typedef struct 
+typedef struct
 {
         obj objImage[N_LINHAS][N_COLUNAS];
-        char src[N_LINHAS][N_COLUNAS];       
+        char src[N_LINHAS][N_COLUNAS];
         int cScoreCounter;
         int cHp;
-        int cLeverCooldown; 
+        int cLeverCooldown;
         int cImortalCooldown;
         int cHasSword;
         int cLevel;
-        float cX, cY;  
+        float cX, cY;
 }mapState;
 
 void inicializa(bool teste, const char *descricao)
@@ -118,7 +118,7 @@ void loadMap(char src[N_LINHAS][N_COLUNAS], obj objImage[N_LINHAS][N_COLUNAS], f
                     objImage[j][i].cd = 0;
                     break;
             }
-        }                
+        }
     }
 }
 
@@ -136,8 +136,8 @@ int collectItem(int counter,obj objImage[N_LINHAS][N_COLUNAS], int x, int y, int
     objImage[(int)y/ESCALA][(int)x/ESCALA].body = 0;
     objImage[(int)y/ESCALA][(int)x/ESCALA].colectable = 0;
     objImage[(int)y/ESCALA][(int)x/ESCALA].player = 0;
-    objImage[(int)y/ESCALA][(int)x/ESCALA].shiftable = 0; 
-    
+    objImage[(int)y/ESCALA][(int)x/ESCALA].shiftable = 0;
+
     return counter;
 }
 
@@ -160,12 +160,12 @@ void leverActivate(int* cd,obj objImage[N_LINHAS][N_COLUNAS])
                 objImage[j][i].body = 0;
                 *cd = TEMPO_ESPERA;
             }
-        }                
+        }
     }
 }
 
 void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)
-{  
+{
     int i,j;
     for(i=0;i<N_COLUNAS;i++)
     {
@@ -191,7 +191,7 @@ void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)
                             objImage[j][i-1].identity = 'O';
                             objImage[j][i-1].cd = TEMPO_ESPERA;
                         }
-                        break; 
+                        break;
                     case 1:
                         if((objImage[j-1][i].body == 0) && (objImage[j-1][i].identity != 'A') && (objImage[j-1][i].identity != 'D') && (objImage[j-1][i].identity != 'B')  && ((j-1)*ESCALA > 00))
                         {
@@ -208,7 +208,7 @@ void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)
                             objImage[j-1][i].identity = 'O';
                             objImage[j-1][i].cd = TEMPO_ESPERA;
                         }
-                        break; 
+                        break;
                     case 2:
                         if((objImage[j][i+1].body == 0 ) && (objImage[j][i+1].identity != 'A') && (objImage[j][i+1].identity != 'D') && (objImage[j][i+1].identity != 'B') && ((i+1)*ESCALA < N_COLUNAS*ESCALA))
                         {
@@ -225,7 +225,7 @@ void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)
                             objImage[j][i+1].identity = 'O';
                             objImage[j][i+1].cd = TEMPO_ESPERA;
                         }
-                        break; 
+                        break;
                     case 3:
                         if((objImage[j+1][i].body == 0) && (objImage[j+1][i].identity != 'A') && (objImage[j+1][i].identity != 'D') && (objImage[j+1][i].identity != 'B') && ((j+1)*ESCALA < N_LINHAS*ESCALA))
                         {
@@ -242,18 +242,18 @@ void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)
                             objImage[j+1][i].identity = 'O';
                             objImage[j+1][i].cd = TEMPO_ESPERA;
                         }
-                        break;                           
+                        break;
                 }
             }else if(objImage[j][i].cd > 0)
             {
                 objImage[j][i].cd--;
             }
-        }                
+        }
     }
 }
 
 void ogreHit(obj objImage[N_LINHAS][N_COLUNAS],float* pX,float* pY,char src[N_LINHAS][N_COLUNAS],int* playerHp,int* counter,int* menu, int* imortalCooldown, int hasSword)
-{  
+{
     int i,j,k,l;
     for(i=0;i<N_COLUNAS;i++)
     {
@@ -272,7 +272,7 @@ void ogreHit(obj objImage[N_LINHAS][N_COLUNAS],float* pX,float* pY,char src[N_LI
                 }else
                 {
                     if(*imortalCooldown == 0)
-                    {   
+                    {
                         for(k=0;k<N_COLUNAS;k++)
                         {
                             for(l=0;l<N_LINHAS;l++)
@@ -283,26 +283,26 @@ void ogreHit(obj objImage[N_LINHAS][N_COLUNAS],float* pX,float* pY,char src[N_LI
                                     *pY = l * ESCALA;
                                 }
                             }
-                        } 
+                        }
 
                         *playerHp -= 1;
 
                         if(*playerHp == 0)
                         {
                             *menu = 1;
-                            loadMap(src,objImage,pX,pY);                
+                            loadMap(src,objImage,pX,pY);
                             *playerHp = 3;
                             *counter = 0;
                         }
-                    }    
-                }              
-            }            
-        }                
+                    }
+                }
+            }
+        }
     }
 }
 
 void giveSword(obj objImage[N_LINHAS][N_COLUNAS], int* hasSword)
-{  
+{
     int i,j;
     int totalCoins = 0;
     for(i=0;i<N_COLUNAS;i++)
@@ -312,8 +312,8 @@ void giveSword(obj objImage[N_LINHAS][N_COLUNAS], int* hasSword)
             if(objImage[j][i].identity == 'M')
             {
                 totalCoins++;
-            }           
-        }                
+            }
+        }
     }
     if(totalCoins == 0)
     {
@@ -337,13 +337,13 @@ void drawMap(obj objImage[N_LINHAS][N_COLUNAS])
                     al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(0, 0, 0));
                     break;
                 case 'C':
-                    al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(217,217,25));
+                    al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(255,165,0));
                     break;
                 case 'M':
                     al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(255, 247, 0));
                     break;
                 case 'B':
-                    al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(202, 135, 0));
+                    al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(139,69,19));
                     break;
                 case 'O':
                     al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(0,179,30));
@@ -358,12 +358,12 @@ void drawMap(obj objImage[N_LINHAS][N_COLUNAS])
                     al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(0, 0, 0));
                     break;
             }
-        }                
+        }
     }
 }
 
 void saveMap(FILE *arq, obj objImage[N_LINHAS][N_COLUNAS], char src[N_LINHAS][N_COLUNAS], int cScoreCounter, int cHp, int cLeverCooldown, int cImortalCooldown, int cHasSword, float cX, float cY, int cLevel)
-{    
+{
     mapState cMapState;
 
     cMapState.cHasSword = cHasSword;
@@ -376,7 +376,7 @@ void saveMap(FILE *arq, obj objImage[N_LINHAS][N_COLUNAS], char src[N_LINHAS][N_
     cMapState.cLevel = cLevel;
 
     memcpy(cMapState.src,src,N_LINHAS*N_COLUNAS*sizeof(char));
-    memcpy(cMapState.objImage,objImage,N_LINHAS*N_COLUNAS*sizeof(obj));  
+    memcpy(cMapState.objImage,objImage,N_LINHAS*N_COLUNAS*sizeof(obj));
 
     arq = fopen(SAVEFILE_ID,"wb");//Abertura de arquivo, gravação e sinalização.
     if(arq == NULL){
@@ -386,17 +386,17 @@ void saveMap(FILE *arq, obj objImage[N_LINHAS][N_COLUNAS], char src[N_LINHAS][N_
             printf("Erro na escrita.");
         }
     }
-    fclose(arq);   
+    fclose(arq);
 }
 
 void loadSave(FILE *arq, obj objImage[N_LINHAS][N_COLUNAS], char src[N_LINHAS][N_COLUNAS], int* cScoreCounter, int* cHp, int* cLeverCooldown, int* cImortalCooldown, int* cHasSword, float* cX, float* cY, int* cLevel)
-{    
-    mapState cMapState;   
+{
+    mapState cMapState;
 
-    arq = fopen(SAVEFILE_ID,"rb+");//Abre o stream do arquivo.   
+    arq = fopen(SAVEFILE_ID,"rb+");//Abre o stream do arquivo.
 
-    if(fread(&cMapState,sizeof(mapState),1,arq)){        
-        *cHasSword = cMapState.cHasSword;        
+    if(fread(&cMapState,sizeof(mapState),1,arq)){
+        *cHasSword = cMapState.cHasSword;
         *cImortalCooldown = cMapState.cImortalCooldown;
         *cLeverCooldown = cMapState.cLeverCooldown;
         *cHp = cMapState.cHp;
@@ -406,14 +406,14 @@ void loadSave(FILE *arq, obj objImage[N_LINHAS][N_COLUNAS], char src[N_LINHAS][N
         *cLevel = cMapState.cLevel;
 
         memcpy(src,cMapState.src,N_LINHAS*N_COLUNAS*sizeof(char));
-        memcpy(objImage,cMapState.objImage,N_LINHAS*N_COLUNAS*sizeof(obj)); 
-    } 
+        memcpy(objImage,cMapState.objImage,N_LINHAS*N_COLUNAS*sizeof(obj));
+    }
 
-    fclose(arq);   
+    fclose(arq);
 }
 
 void readMap(FILE *arq,  char src[N_LINHAS][N_COLUNAS],char fileName[])
-{    
+{
     int i,j;
 
     arq = fopen(fileName,"rb+");//Abre o stream do arquivo.
@@ -422,13 +422,13 @@ void readMap(FILE *arq,  char src[N_LINHAS][N_COLUNAS],char fileName[])
     {
         for(j=0;j<N_COLUNAS;j++)
         {
-            src[i][j] = fgetc(arq);           
+            src[i][j] = fgetc(arq);
             if(j == 26){
                 fseek(arq,2,SEEK_CUR);
-            }         
+            }
         }
     }
-    fclose(arq);   
+    fclose(arq);
 }
 
 int checkLevel(obj objImage[N_LINHAS][N_COLUNAS], int* levelNumber)
@@ -446,41 +446,41 @@ int checkLevel(obj objImage[N_LINHAS][N_COLUNAS], int* levelNumber)
             }
         }
     }
-    
+
     if(totalKeys == 0)
     {
         *levelNumber += 1;
         intReturn = 1;
     }
-    
+
     return intReturn;
 }
 
 int main()
 {
     srand(time(NULL));
-    int randomItem; 
+    int randomItem;
     int i,j;
     int onMenu = 1;
     int scoreCounter = 00;
     int hp = 3;
-    int leverCooldown; 
+    int leverCooldown;
     int imortalCooldown;
     int hasSword = 0;
-    int currentLevel = 1;    
+    int currentLevel = 1;
     bool done = false;
-    bool redraw = true;    
-    float x, y;    
+    bool redraw = true;
+    float x, y;
     FILE *saveLocation;
     unsigned char tecla[ALLEGRO_KEY_MAX];
     char mapNumber[3];
     char mapFile[10];
-    ALLEGRO_EVENT event;   
-    
+    ALLEGRO_EVENT event;
+
     char map[N_LINHAS][N_COLUNAS];
 
-    obj objImage[N_LINHAS][N_COLUNAS];     
-    
+    obj objImage[N_LINHAS][N_COLUNAS];
+
     inicializa(al_init(), "Allegro.");
     inicializa(al_install_keyboard(), "Teclado.");
     ALLEGRO_TIMER* timer = al_create_timer(1.0 / 15.0);
@@ -508,88 +508,88 @@ int main()
     while(1)
     {
         if(onMenu)
-        {            
-            al_wait_for_event(queue, &event);                   
-              
+        {
+            al_wait_for_event(queue, &event);
+
             switch(event.type)
             {
                 case ALLEGRO_EVENT_TIMER:
                     if(tecla[ALLEGRO_KEY_N])
                     {
-                        strcpy(mapFile,MAP);                         
-                        snprintf(mapNumber,sizeof(mapNumber),"%02d",currentLevel);                      
-                        strcat(mapFile,mapNumber);                                                                                           
-                        strcat(mapFile,MAPENDFILE_ID);                                 
+                        strcpy(mapFile,MAP);
+                        snprintf(mapNumber,sizeof(mapNumber),"%02d",currentLevel);
+                        strcat(mapFile,mapNumber);
+                        strcat(mapFile,MAPENDFILE_ID);
                         readMap(saveLocation,map,mapFile);
-                        loadMap(map,objImage,&x,&y);                       
+                        loadMap(map,objImage,&x,&y);
                         scoreCounter = 00;
                         hp = 3;
-                        leverCooldown = 00; 
+                        leverCooldown = 00;
                         imortalCooldown = 00;
                         hasSword = 0;
-                        onMenu = 0;                     
+                        onMenu = 0;
                     }
-                       
+
                     if(tecla[ALLEGRO_KEY_C])
                     {
                         loadSave(saveLocation,objImage,map,&scoreCounter,&hp,&leverCooldown,&imortalCooldown,&hasSword,&x,&y,&currentLevel);
                         onMenu = 0;
                     }
-                
+
                     if(tecla[ALLEGRO_KEY_S])
                     {
                         saveMap(saveLocation,objImage,map,scoreCounter,hp,leverCooldown,imortalCooldown,hasSword,x,y,currentLevel);
                         onMenu = 0;
                     }
-                    
+
                     if(tecla[ALLEGRO_KEY_V])
                     {
                         onMenu = 0;
                     }
-                    
+
                     if(tecla[ALLEGRO_KEY_Q])
                     {
                         done = true;
-                    }                                          
-    
+                    }
+
                     for(int i = 0; i < ALLEGRO_KEY_MAX; i++)
                     {
                         tecla[i] &= KEY_SEEN;
                     }
-                        
-    
+
+
                     redraw = true;
                     break;
-    
+
                 case ALLEGRO_EVENT_KEY_DOWN:
                     tecla[event.keyboard.keycode] = KEY_SEEN | KEY_RELEASED;
                     break;
-    
+
                 case ALLEGRO_EVENT_KEY_UP:
                     tecla[event.keyboard.keycode] &= KEY_RELEASED;
                     break;
-                    
+
                 case ALLEGRO_EVENT_DISPLAY_CLOSE:
                     done = true;
                     break;
             }
-    
+
             if(done){
                 break;
-            }               
-    
+            }
+
             if(redraw && al_is_event_queue_empty(queue))
             {
                 al_clear_to_color(al_map_rgb(0, 0, 0));
-                al_draw_textf(font, al_map_rgb(255, 255, 255), 8*ESCALA, 5*ESCALA, 0, "Novo Jogo(N)|");   
-                al_draw_textf(font, al_map_rgb(255, 255, 255), 10.25*ESCALA, 5*ESCALA, 0, "Carregar Jogo(C)|"); 
-                al_draw_textf(font, al_map_rgb(255, 255, 255), 13.25*ESCALA, 5*ESCALA, 0, "Salvar Jogo(S)|"); 
-                al_draw_textf(font, al_map_rgb(255, 255, 255), 16*ESCALA, 5*ESCALA, 0, "Sair do Jogo(Q)|"); 
+                al_draw_textf(font, al_map_rgb(255, 255, 255), 8*ESCALA, 5*ESCALA, 0, "Novo Jogo(N)|");
+                al_draw_textf(font, al_map_rgb(255, 255, 255), 10.25*ESCALA, 5*ESCALA, 0, "Carregar Jogo(C)|");
+                al_draw_textf(font, al_map_rgb(255, 255, 255), 13.25*ESCALA, 5*ESCALA, 0, "Salvar Jogo(S)|");
+                al_draw_textf(font, al_map_rgb(255, 255, 255), 16*ESCALA, 5*ESCALA, 0, "Sair do Jogo(Q)|");
                 al_draw_textf(font, al_map_rgb(255, 255, 255), 19*ESCALA, 5*ESCALA, 0, "Voltar(V)");
-                al_draw_textf(font, al_map_rgb(255, 255, 255), 24*ESCALA, 0, 0, "Pontuação: %d",scoreCounter);   
-                al_draw_textf(font, al_map_rgb(255, 255, 255), 5*ESCALA, 0, 0, "%s",mapFile);          
+                al_draw_textf(font, al_map_rgb(255, 255, 255), 24*ESCALA, 0, 0, "Pontuação: %d",scoreCounter);
+                al_draw_textf(font, al_map_rgb(255, 255, 255), 5*ESCALA, 0, 0, "%s",mapFile);
                 al_flip_display();
-    
+
                 redraw = false;
             }
 
@@ -599,35 +599,35 @@ int main()
             al_wait_for_event(queue, &event);
 
             if(checkLevel(objImage, &currentLevel))
-            {       
+            {
                 if(currentLevel > 99)
                 {
                     currentLevel = 1;
-                }         
-                strcpy(mapFile,MAP);                          
-                snprintf(mapNumber,sizeof(mapNumber),"%02d",currentLevel);                      
-                strcat(mapFile,mapNumber);                                                                                             
-                strcat(mapFile,MAPENDFILE_ID);  
-                puts(mapFile);                                                
+                }
+                strcpy(mapFile,MAP);
+                snprintf(mapNumber,sizeof(mapNumber),"%02d",currentLevel);
+                strcat(mapFile,mapNumber);
+                strcat(mapFile,MAPENDFILE_ID);
+                puts(mapFile);
                 readMap(saveLocation,map,mapFile);
-                loadMap(map,objImage,&x,&y);                
+                loadMap(map,objImage,&x,&y);
                 hp = 3;
-                leverCooldown = 00; 
+                leverCooldown = 00;
                 imortalCooldown = 00;
-                hasSword = 0;                        
+                hasSword = 0;
             }
 
             updateOgre(objImage,randomItem);
-               
+
             ogreHit(objImage,&x,&y,map,&hp,&scoreCounter,&onMenu,&imortalCooldown,hasSword);
 
             giveSword(objImage,&hasSword);
-                    
+
             if((objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'M') || (objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'C'))
             {
-                scoreCounter = collectItem(scoreCounter,objImage, x, y, &imortalCooldown);    
+                scoreCounter = collectItem(scoreCounter,objImage, x, y, &imortalCooldown);
             }
-    
+
             if(leverCooldown > 0)
             {
                 leverCooldown--;
@@ -637,7 +637,7 @@ int main()
             {
                 imortalCooldown--;
             }
-    
+
             switch(event.type)
             {
                 case ALLEGRO_EVENT_TIMER:
@@ -648,7 +648,7 @@ int main()
                             y-=ESCALA;
                         }
                     }
-                       
+
                     if(tecla[ALLEGRO_KEY_DOWN])
                     {
                         if(y == 10*ESCALA || (objImage[(int)(y+ESCALA)/ESCALA][(int)x/ESCALA].body == 1)){}else
@@ -656,7 +656,7 @@ int main()
                             y+=ESCALA;
                         }
                     }
-                
+
                     if(tecla[ALLEGRO_KEY_LEFT])
                     {
                         if(x == 0 || (objImage[(int)y/ESCALA][(int)(x-ESCALA)/ESCALA].body == 1)){}else
@@ -664,7 +664,7 @@ int main()
                             x-=ESCALA;
                         }
                     }
-                    
+
                     if(tecla[ALLEGRO_KEY_RIGHT])
                     {
                         if(x == 26*ESCALA || (objImage[(int)y/ESCALA][(int)(x+ESCALA)/ESCALA].body == 1)){}else
@@ -672,7 +672,7 @@ int main()
                             x+=ESCALA;
                         }
                     }
-                    
+
                     if(tecla[ALLEGRO_KEY_ESCAPE])
                     {
                         done = true;
@@ -682,38 +682,38 @@ int main()
                     {
                         onMenu = 1;
                     }
-    
+
                     if((tecla[ALLEGRO_KEY_B] && ((objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)(y-ESCALA)/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)(y+ESCALA)/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)y/ESCALA][(int)(x-ESCALA)/ESCALA].identity == 'B')|| (objImage[(int)y/ESCALA][(int)(x+ESCALA)/ESCALA].identity == 'B'))) && (leverCooldown == 0))
                     {
                         leverActivate(&leverCooldown, objImage);
                     }
-                            
+
                     for(int i = 0; i < ALLEGRO_KEY_MAX; i++)
                     {
                         tecla[i] &= KEY_SEEN;
                     }
-                        
-    
+
+
                     redraw = true;
                     break;
-    
+
                 case ALLEGRO_EVENT_KEY_DOWN:
                     tecla[event.keyboard.keycode] = KEY_SEEN | KEY_RELEASED;
                     break;
-    
+
                 case ALLEGRO_EVENT_KEY_UP:
                     tecla[event.keyboard.keycode] &= KEY_RELEASED;
                     break;
-                    
+
                 case ALLEGRO_EVENT_DISPLAY_CLOSE:
                     done = true;
                     break;
             }
-    
+
             if(done){
                 break;
             }
-    
+
             if(redraw && al_is_event_queue_empty(queue))
             {
                 al_clear_to_color(al_map_rgb(0, 0, 0));
@@ -731,19 +731,19 @@ int main()
                     {
                         al_draw_filled_rectangle(x, y, x + ESCALA-1, y + ESCALA-1, al_map_rgb(255,0,0));
                     }
-                    
+
                 }else
                 {
                     al_draw_filled_rectangle(x, y, x + ESCALA-1, y + ESCALA-1, al_map_rgb(153,102,255));
-                }              
+                }
                 al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 0, 0, "X: %.1f Y: %.1f", x, y);
-                al_draw_textf(font, al_map_rgb(255, 255, 255), 24*ESCALA, 0, 0, "Pontuação: %d",scoreCounter);                
+                al_draw_textf(font, al_map_rgb(255, 255, 255), 24*ESCALA, 0, 0, "Pontuação: %d",scoreCounter);
                 al_draw_textf(font, al_map_rgb(255, 255, 255), 22*ESCALA, 0, 0, "Vida: %d",hp);
                 al_flip_display();
-    
+
                 redraw = false;
             }
-        }        
+        }
     }
 
     al_destroy_font(font);
