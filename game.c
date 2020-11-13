@@ -607,8 +607,7 @@ int main()
                 strcpy(mapFile,MAP);
                 snprintf(mapNumber,sizeof(mapNumber),"%02d",currentLevel);
                 strcat(mapFile,mapNumber);
-                strcat(mapFile,MAPENDFILE_ID);
-                puts(mapFile);
+                strcat(mapFile,MAPENDFILE_ID);                
                 readMap(saveLocation,map,mapFile);
                 loadMap(map,objImage,&x,&y);
                 hp = 3;
