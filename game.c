@@ -146,7 +146,7 @@ int collectItem(int counter,obj objImage[N_LINHAS][N_COLUNAS], int x, int y, int
     return counter;
 }
 
-void leverActivate(int* cd,obj objImage[N_LINHAS][N_COLUNAS])
+void leverActivate(int* cd,obj objImage[N_LINHAS][N_COLUNAS], int* isLever)
 {
     int i,j;
     for(i=0;i<N_COLUNAS;i++)
@@ -167,6 +167,15 @@ void leverActivate(int* cd,obj objImage[N_LINHAS][N_COLUNAS])
             }
         }
     }
+
+    if(*isLever)
+    {
+        *isLever = 0;
+    }else
+    {
+        *isLever = 1;
+    }
+    
 }
 
 void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)
@@ -338,7 +347,7 @@ void giveSword(obj objImage[N_LINHAS][N_COLUNAS], int* hasSword)
     }
 }
 
-void drawMap(obj objImage[N_LINHAS][N_COLUNAS])
+void drawMap(obj objImage[N_LINHAS][N_COLUNAS], int isLever)
 {
     int i,j;
 
@@ -346,6 +355,7 @@ void drawMap(obj objImage[N_LINHAS][N_COLUNAS])
     ALLEGRO_BITMAP* wallI = al_load_bitmap("images/wallF.png");
     ALLEGRO_BITMAP* coinI = al_load_bitmap("images/coinF.png");
     ALLEGRO_BITMAP* leverI = al_load_bitmap("images/leverF.png");
+    ALLEGRO_BITMAP* leverII = al_load_bitmap("images/leverIF.png");
     ALLEGRO_BITMAP* doorI = al_load_bitmap("images/doorF.png");  
     ALLEGRO_BITMAP* keyI = al_load_bitmap("images/keyF.png");
     ALLEGRO_BITMAP* ogreI = al_load_bitmap("images/ogreF.png");    
@@ -374,7 +384,13 @@ void drawMap(obj objImage[N_LINHAS][N_COLUNAS])
                     break;
                 case 'B':
                     //al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(139,69,19));
-                    al_draw_bitmap(leverI, i*ESCALA, j*ESCALA, 0);
+                    if(isLever)
+                    {
+                        al_draw_bitmap(leverII, i*ESCALA, j*ESCALA, 0);
+                    }else
+                    {
+                        al_draw_bitmap(leverI, i*ESCALA, j*ESCALA, 0);    
+                    }                   
                     break;
                 case 'O':
                     //al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(0,179,30));           
@@ -524,6 +540,8 @@ int main()
     int imortalCooldown;
     int hasSword = 0;
     int currentLevel = 1;
+    int isInverted = 0;
+    int isLeverActivated = 0;
     bool done = false;
     bool redraw = true;
     float x, y;
@@ -558,6 +576,10 @@ int main()
     ALLEGRO_BITMAP* heroI = al_load_bitmap("images/heroF.png");
     ALLEGRO_BITMAP* heroGI = al_load_bitmap("images/heroGF.png");
     ALLEGRO_BITMAP* heroRI = al_load_bitmap("images/heroRF.png");
+
+    ALLEGRO_BITMAP* heroII = al_load_bitmap("images/heroIF.png");
+    ALLEGRO_BITMAP* heroGII = al_load_bitmap("images/heroIGF.png");
+    ALLEGRO_BITMAP* heroRII = al_load_bitmap("images/heroIRF.png");
 
     al_register_event_source(queue, al_get_keyboard_event_source());
     al_register_event_source(queue, al_get_display_event_source(disp));
@@ -715,6 +737,7 @@ int main()
                         if(x == 0 || (objImage[(int)y/ESCALA][(int)(x-ESCALA)/ESCALA].body == 1)){}else
                         {
                             x-=ESCALA;
+                            isInverted = 1;
                         }
                     }
 
@@ -723,6 +746,7 @@ int main()
                         if(x == 26*ESCALA || (objImage[(int)y/ESCALA][(int)(x+ESCALA)/ESCALA].body == 1)){}else
                         {
                             x+=ESCALA;
+                            isInverted = 0;
                         }
                     }
 
@@ -738,7 +762,7 @@ int main()
 
                     if((tecla[ALLEGRO_KEY_B] && ((objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)(y-ESCALA)/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)(y+ESCALA)/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)y/ESCALA][(int)(x-ESCALA)/ESCALA].identity == 'B')|| (objImage[(int)y/ESCALA][(int)(x+ESCALA)/ESCALA].identity == 'B'))) && (leverCooldown == 0))
                     {
-                        leverActivate(&leverCooldown, objImage);
+                        leverActivate(&leverCooldown, objImage, &isLeverActivated);
                     }
 
                     for(int i = 0; i < ALLEGRO_KEY_MAX; i++)
@@ -770,7 +794,7 @@ int main()
             if(redraw && al_is_event_queue_empty(queue))
             {
                 al_clear_to_color(al_map_rgb(0, 0, 0));
-                drawMap(objImage);
+                drawMap(objImage, isLeverActivated);
                 if(hasSword)
                 {
                     al_draw_textf(font, al_map_rgb(255, 255, 255), 12*ESCALA, 0, 0, "Excalibur ativada.");
@@ -779,20 +803,39 @@ int main()
                 {
                     if(imortalCooldown % 2 == 0)
                     {
+                        if(isInverted)
+                        {
+                             al_draw_bitmap(heroGII, x,y, 0);   
+                        }else
+                        {
+                            al_draw_bitmap(heroGI, x,y, 0);  
+                        }
                         //al_draw_filled_rectangle(x, y, x + ESCALA-1, y + ESCALA-1, al_map_rgb(  43,255,0));
-                        al_draw_bitmap(heroGI, x,y, 0);  
+                       
                     }else
                     {
-                        //al_draw_filled_rectangle(x, y, x + ESCALA-1, y + ESCALA-1, al_map_rgb(255,0,0));
-                        al_draw_bitmap(heroRI, x,y, 0);  
+                        if(isInverted)
+                        {
+                            al_draw_bitmap(heroRII, x,y, 0); 
+                        }else
+                        {
+                            al_draw_bitmap(heroRI, x,y, 0); 
+                        }                        
+                        //al_draw_filled_rectangle(x, y, x + ESCALA-1, y + ESCALA-1, al_map_rgb(255,0,0));                         
                     }
 
                 }else
                 {
-                    //al_draw_filled_rectangle(x, y, x + ESCALA-1, y + ESCALA-1, al_map_rgb(153,102,255));
-                    al_draw_bitmap(heroI, x,y, 0);  
+                    if(isInverted)
+                    {
+                        al_draw_bitmap(heroII, x,y, 0);
+                    }else
+                    {
+                        al_draw_bitmap(heroI, x,y, 0);
+                    } 
+                    //al_draw_filled_rectangle(x, y, x + ESCALA-1, y + ESCALA-1, al_map_rgb(153,102,255));                      
                 }
-                al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 0, 0, "X: %.1f Y: %.1f", x, y);
+                //al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 0, 0, "X: %.1f Y: %.1f", x, y);
                 al_draw_textf(font, al_map_rgb(255, 255, 255), 24*ESCALA, 0, 0, "Pontuação: %d",scoreCounter);
                 al_draw_textf(font, al_map_rgb(255, 255, 255), 22*ESCALA, 0, 0, "Vida: %d",hp);
                 al_flip_display();
