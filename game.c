@@ -1,4 +1,6 @@
-#include <stdio.h>
+// Trabalho Final ERE - Gabriel Castelo Branco Gomes e Tiago Torres Schmidt.
+
+#include <stdio.h> //Bibliotecas utilizadas no projeto. Projeto desenvolvido utilizando Allegro.
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -7,7 +9,7 @@
 #include <allegro5/allegro_primitives.h>
 #include <allegro5/allegro_image.h>
 
-#define KEY_SEEN     1
+#define KEY_SEEN     1//Constantes utilizadas no projeto.
 #define KEY_RELEASED 2
 #define N_LINHAS 11
 #define N_COLUNAS 27
@@ -16,10 +18,11 @@
 #define SAVEFILE_ID "currentSave.bin"
 #define MAP "mapa"
 #define MAPENDFILE_ID ".txt"
+#define MAX_LEVEL 99
 
-typedef struct
+typedef struct//Estrutura obj, base do jogo. 'obj' serve como um molde para cada elemento do jogo. Ou seja, em determinado ponto da execução, a matriz de caracteres é convertida em uma matriz de obj.
 {
-        int body;
+        int body;//Propriedades dos objetos do jogo. Nem todos os elementos tem todas propriedades definidas.
         int shiftable;
         int state;
         int colectable;
@@ -29,9 +32,9 @@ typedef struct
         char lastStep;
 }obj;
 
-typedef struct
+typedef struct//Estrutura mapState, utilizada para salvar o jogo.
 {
-        obj objImage[N_LINHAS][N_COLUNAS];
+        obj objImage[N_LINHAS][N_COLUNAS];// Salva todas as propriedades interessantes para o jogo.
         char src[N_LINHAS][N_COLUNAS];
         int cScoreCounter;
         int cHp;
@@ -39,10 +42,12 @@ typedef struct
         int cImortalCooldown;
         int cHasSword;
         int cLevel;
+        int cLeverS;
+        int cPlayerS;
         float cX, cY;
 }mapState;
 
-void inicializa(bool teste, const char *descricao)
+void inicializa(bool teste, const char *descricao)//Função de inicialização geral, para os adicionais do Allegro.
 {
     if(teste) return;
 
@@ -50,7 +55,7 @@ void inicializa(bool teste, const char *descricao)
     exit(1);
 }
 
-void loadMap(char src[N_LINHAS][N_COLUNAS], obj objImage[N_LINHAS][N_COLUNAS], float* x, float* y)
+void loadMap(char src[N_LINHAS][N_COLUNAS], obj objImage[N_LINHAS][N_COLUNAS], float* x, float* y)//Função loadMap, converte uma matriz de caracteres em uma matriz de obj.
 {
     int i,j;
     for(i=0;i<N_COLUNAS;i++)
@@ -126,17 +131,17 @@ void loadMap(char src[N_LINHAS][N_COLUNAS], obj objImage[N_LINHAS][N_COLUNAS], f
     }
 }
 
-int collectItem(int counter,obj objImage[N_LINHAS][N_COLUNAS], int x, int y, int* imortalCooldown)
+int collectItem(int counter,obj objImage[N_LINHAS][N_COLUNAS], int x, int y, int* imortalCooldown)//Função collectItem, ativada para coletar moedas ou chaves.
 {
     if(objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'M')
     {
-        counter += 10;
+        counter += 10;//Aumenta a pontuação.
     }
     if(counter % 100 == 0)
     {
-        *imortalCooldown = (15 * 5);
+        *imortalCooldown = (15 * 5);//Sistema de imortalidade.
     }
-    objImage[(int)y/ESCALA][(int)x/ESCALA].identity = ' ';
+    objImage[(int)y/ESCALA][(int)x/ESCALA].identity = ' ';//Transforma a posição da moeda em nada, "excluindo-a".
     objImage[(int)y/ESCALA][(int)x/ESCALA].body = 0;
     objImage[(int)y/ESCALA][(int)x/ESCALA].colectable = 0;
     objImage[(int)y/ESCALA][(int)x/ESCALA].player = 0;
@@ -146,10 +151,10 @@ int collectItem(int counter,obj objImage[N_LINHAS][N_COLUNAS], int x, int y, int
     return counter;
 }
 
-void leverActivate(int* cd,obj objImage[N_LINHAS][N_COLUNAS])
+void leverActivate(int* cd,obj objImage[N_LINHAS][N_COLUNAS], int* isLever)//Função leverActivate, realiza a mecânica de portas.
 {
     int i,j;
-    for(i=0;i<N_COLUNAS;i++)
+    for(i=0;i<N_COLUNAS;i++)//Procura todas as portas do jogo, e inverte o estado de cada uma.
     {
         for(j=0;j<N_LINHAS;j++)
         {
@@ -167,26 +172,35 @@ void leverActivate(int* cd,obj objImage[N_LINHAS][N_COLUNAS])
             }
         }
     }
+
+    if(*isLever)//Controle de animação da alavanca.
+    {
+        *isLever = 0;
+    }else
+    {
+        *isLever = 1;
+    }
+    
 }
 
-void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)
+void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)//Função updateOgre, em geral, é a "inteligência artifical" dos ogros.
 {
     int i,j;
     for(i=0;i<N_COLUNAS;i++)
     {
         for(j=0;j<N_LINHAS;j++)
         {
-            if((objImage[j][i].identity == 'O')&&(objImage[j][i].cd == 0))
+            if((objImage[j][i].identity == 'O')&&(objImage[j][i].cd == 0))//Procura todos os Ogros sem tempo de recarga do mapa.
             {
-                switch (randomItem)
+                switch (randomItem)//Através de uma variável aleatória para direção, executa.
                 {
                     case 0:
                         if((objImage[j][i-1].body == 0) && (objImage[j][i-1].identity != 'A')&& (objImage[j][i-1].identity != 'O') && (objImage[j][i-1].identity != 'D') && (objImage[j][i-1].identity != 'B') && ((i-1)*ESCALA > 00))
-                        {
+                        {//Teste condicionais de passagem, ou seja, verifica se é possível passar pelo obj adjacente.
                             objImage[j][i-1].lastStep = objImage[j][i-1].identity;
                             
 
-                            objImage[j][i].body = objImage[j][i-1].body;
+                            objImage[j][i].body = objImage[j][i-1].body;//A logística do movimento do Ogro é seguinte: Ele não anda verdadeiramente, ele transforma o bloco ao lado em ogro e retorna a antiga propriedade do bloco onde estava.
                             objImage[j][i].colectable = objImage[j][i-1].colectable;
                             objImage[j][i].player = objImage[j][i-1].player;
                             objImage[j][i].shiftable =  objImage[j][i-1].shiftable;                            
@@ -261,7 +275,7 @@ void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)
                         }
                         break;
                 }
-            }else if(objImage[j][i].cd > 0)
+            }else if(objImage[j][i].cd > 0)//Reseta o tempo de recarga dos ogros.
             {
                 objImage[j][i].cd--;
             }
@@ -269,25 +283,25 @@ void updateOgre(obj objImage[N_LINHAS][N_COLUNAS], int randomItem)
     }
 }
 
-void ogreHit(obj objImage[N_LINHAS][N_COLUNAS],float* pX,float* pY,char src[N_LINHAS][N_COLUNAS],int* playerHp,int* counter,int* menu, int* imortalCooldown, int hasSword)
-{
+void ogreHit(obj objImage[N_LINHAS][N_COLUNAS],float* pX,float* pY,char src[N_LINHAS][N_COLUNAS],int* playerHp,int* counter,int* menu, int* imortalCooldown, int* currentLevel, int* leverCooldown, int *hasSword)
+{//Função ogreHit, executa o sistema de ataque e vida do jogo. É responsável pelo ataque do ogro E do herói.
     int i,j,k,l;
     for(i=0;i<N_COLUNAS;i++)
     {
         for(j=0;j<N_LINHAS;j++)
         {
-            if((objImage[j][i].identity == 'O')&&(*pX/ESCALA == i)&&(*pY/ESCALA == j))
+            if((objImage[j][i].identity == 'O')&&(*pX/ESCALA == i)&&(*pY/ESCALA == j))//Se os dois estão no mesmo local,
             {
-                if(hasSword || *imortalCooldown > 0)
+                if(*hasSword || *imortalCooldown > 0)//Se o player tem a espada, ou está imortal.
                 {
-                    objImage[(int)*pY/ESCALA][(int)*pX/ESCALA].identity = ' ';
+                    objImage[(int)*pY/ESCALA][(int)*pX/ESCALA].identity = ' ';//Mata ogro.
                     objImage[(int)*pY/ESCALA][(int)*pX/ESCALA].body = 0;
                     objImage[(int)*pY/ESCALA][(int)*pX/ESCALA].colectable = 0;
                     objImage[(int)*pY/ESCALA][(int)*pX/ESCALA].player = 0;
                     objImage[(int)*pY/ESCALA][(int)*pX/ESCALA].shiftable = 0;
                     *counter += 100;
                 }else
-                {
+                {//Se não, mata o player.
                     if(*imortalCooldown == 0)
                     {
                         for(k=0;k<N_COLUNAS;k++)
@@ -296,20 +310,24 @@ void ogreHit(obj objImage[N_LINHAS][N_COLUNAS],float* pX,float* pY,char src[N_LI
                             {
                                 if(src[l][k] == 'J')
                                 {
-                                    *pX = k * ESCALA;
+                                    *pX = k * ESCALA;//Reseta a posição através da src.
                                     *pY = l * ESCALA;
                                 }
                             }
                         }
 
-                        *playerHp -= 1;
+                        *playerHp -= 1;//Reduz o hp.
 
                         if(*playerHp == 0)
                         {
-                            *menu = 1;
+                            *menu = 1;//Reseta o game.
                             loadMap(src,objImage,pX,pY);
                             *playerHp = 3;
                             *counter = 0;
+                            *currentLevel = 1;                            
+                            *leverCooldown = 00;
+                            *imortalCooldown = 00;
+                            *hasSword = 0;                            
                         }
                     }
                 }
@@ -318,7 +336,7 @@ void ogreHit(obj objImage[N_LINHAS][N_COLUNAS],float* pX,float* pY,char src[N_LI
     }
 }
 
-void giveSword(obj objImage[N_LINHAS][N_COLUNAS], int* hasSword)
+void giveSword(obj objImage[N_LINHAS][N_COLUNAS], int* hasSword)//Função giveSword, libera a espada para o guerreiro.
 {
     int i,j;
     int totalCoins = 0;
@@ -338,7 +356,7 @@ void giveSword(obj objImage[N_LINHAS][N_COLUNAS], int* hasSword)
     }
 }
 
-void drawMap(obj objImage[N_LINHAS][N_COLUNAS])
+void drawMap(obj objImage[N_LINHAS][N_COLUNAS], int isLever)//Função drawMap, na verdade, é um apanhado dos recursos visuais da Allegro. Em geral, estão aqui todos os possíveis. Ou seja, os outros desenhos da Allegro não foram possíveis de ser retirado da main.
 {
     int i,j;
 
@@ -346,16 +364,17 @@ void drawMap(obj objImage[N_LINHAS][N_COLUNAS])
     ALLEGRO_BITMAP* wallI = al_load_bitmap("images/wallF.png");
     ALLEGRO_BITMAP* coinI = al_load_bitmap("images/coinF.png");
     ALLEGRO_BITMAP* leverI = al_load_bitmap("images/leverF.png");
+    ALLEGRO_BITMAP* leverII = al_load_bitmap("images/leverIF.png");
     ALLEGRO_BITMAP* doorI = al_load_bitmap("images/doorF.png");  
     ALLEGRO_BITMAP* keyI = al_load_bitmap("images/keyF.png");
     ALLEGRO_BITMAP* ogreI = al_load_bitmap("images/ogreF.png");    
 
-    for(i=0;i<N_COLUNAS;i++)
+    for(i=0;i<N_COLUNAS;i++)//Carrega as imagens e desenha cada elemento.
     {
         for(j=0;j<N_LINHAS;j++)
         {
             switch(objImage[j][i].identity)
-            {
+            {//Esses códigos comentados são, na verdade, a versão sem sprites.
                 case '#':
                     //al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(172, 172, 172));
                     al_draw_bitmap(wallI, i*ESCALA, j*ESCALA, 0);
@@ -374,7 +393,13 @@ void drawMap(obj objImage[N_LINHAS][N_COLUNAS])
                     break;
                 case 'B':
                     //al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(139,69,19));
-                    al_draw_bitmap(leverI, i*ESCALA, j*ESCALA, 0);
+                    if(isLever)
+                    {
+                        al_draw_bitmap(leverII, i*ESCALA, j*ESCALA, 0);
+                    }else
+                    {
+                        al_draw_bitmap(leverI, i*ESCALA, j*ESCALA, 0);    
+                    }                   
                     break;
                 case 'O':
                     //al_draw_filled_rectangle(i*ESCALA, j*ESCALA, i*ESCALA + ESCALA-1 , j*ESCALA + ESCALA-1 , al_map_rgb(0,179,30));           
@@ -401,9 +426,9 @@ void drawMap(obj objImage[N_LINHAS][N_COLUNAS])
     }
 }
 
-void saveMap(FILE *arq, obj objImage[N_LINHAS][N_COLUNAS], char src[N_LINHAS][N_COLUNAS], int cScoreCounter, int cHp, int cLeverCooldown, int cImortalCooldown, int cHasSword, float cX, float cY, int cLevel)
+void saveMap(FILE *arq, obj objImage[N_LINHAS][N_COLUNAS], char src[N_LINHAS][N_COLUNAS], int cScoreCounter, int cHp, int cLeverCooldown, int cImortalCooldown, int cHasSword, float cX, float cY, int cLevel, int isLever, int isInverted)
 {
-    mapState cMapState;
+    mapState cMapState;//Cria um objeto com estado do mapa, e o salva.
 
     cMapState.cHasSword = cHasSword;
     cMapState.cImortalCooldown = cImortalCooldown;
@@ -413,6 +438,8 @@ void saveMap(FILE *arq, obj objImage[N_LINHAS][N_COLUNAS], char src[N_LINHAS][N_
     cMapState.cX = cX;
     cMapState.cY = cY;
     cMapState.cLevel = cLevel;
+    cMapState.cLeverS = isLever;
+    cMapState.cPlayerS = isInverted;
 
     memcpy(cMapState.src,src,N_LINHAS*N_COLUNAS*sizeof(char));
     memcpy(cMapState.objImage,objImage,N_LINHAS*N_COLUNAS*sizeof(obj));
@@ -428,8 +455,8 @@ void saveMap(FILE *arq, obj objImage[N_LINHAS][N_COLUNAS], char src[N_LINHAS][N_
     fclose(arq);
 }
 
-void loadSave(FILE *arq, obj objImage[N_LINHAS][N_COLUNAS], char src[N_LINHAS][N_COLUNAS], int* cScoreCounter, int* cHp, int* cLeverCooldown, int* cImortalCooldown, int* cHasSword, float* cX, float* cY, int* cLevel)
-{
+void loadSave(FILE *arq, obj objImage[N_LINHAS][N_COLUNAS], char src[N_LINHAS][N_COLUNAS], int* cScoreCounter, int* cHp, int* cLeverCooldown, int* cImortalCooldown, int* cHasSword, float* cX, float* cY, int* cLevel, int* cIsLever, int* cIsInverted)
+{//Função loadSave, carrega o save binário do game, através de uma máscara mapState.
     mapState cMapState;
 
     arq = fopen(SAVEFILE_ID,"rb+");//Abre o stream do arquivo.
@@ -443,6 +470,8 @@ void loadSave(FILE *arq, obj objImage[N_LINHAS][N_COLUNAS], char src[N_LINHAS][N
         *cX = cMapState.cX;
         *cY = cMapState.cY;
         *cLevel = cMapState.cLevel;
+        *cIsLever = cMapState.cLeverS;
+        *cIsInverted = cMapState.cPlayerS;
 
         memcpy(src,cMapState.src,N_LINHAS*N_COLUNAS*sizeof(char));
         memcpy(objImage,cMapState.objImage,N_LINHAS*N_COLUNAS*sizeof(obj));
@@ -452,7 +481,7 @@ void loadSave(FILE *arq, obj objImage[N_LINHAS][N_COLUNAS], char src[N_LINHAS][N
 }
 
 void readMap(FILE *arq,  char src[N_LINHAS][N_COLUNAS], int* cLevel, char mapFile[10])
-{
+{//Função readMap, lê o arquivo .txt para converter em um src.
     int i,j;
     char mapNumber[3];   
     
@@ -460,7 +489,7 @@ void readMap(FILE *arq,  char src[N_LINHAS][N_COLUNAS], int* cLevel, char mapFil
     strcpy(mapFile,MAP);
     snprintf(mapNumber,sizeof(mapNumber),"%02d", *cLevel);
     strcat(mapFile,mapNumber);
-    strcat(mapFile,MAPENDFILE_ID);
+    strcat(mapFile,MAPENDFILE_ID);//Diversas concatenações para definir o nome do arquivo de leitura.
 
     if(!(arq = fopen(mapFile,"rb+"))) //Abre o stream do arquivo.
     {
@@ -478,7 +507,7 @@ void readMap(FILE *arq,  char src[N_LINHAS][N_COLUNAS], int* cLevel, char mapFil
     {
         for(j=0;j<N_COLUNAS;j++)
         {
-            src[i][j] = fgetc(arq);
+            src[i][j] = fgetc(arq);//Define a src.
             if(j == 26){
                 fseek(arq,2,SEEK_CUR);
             }
@@ -488,7 +517,7 @@ void readMap(FILE *arq,  char src[N_LINHAS][N_COLUNAS], int* cLevel, char mapFil
 }
 
 int checkLevel(obj objImage[N_LINHAS][N_COLUNAS], int* levelNumber)
-{
+{//Função checkLevel, encerra a fase e sinaliza o fim da fase.
     int totalKeys = 0;
     int i,j;
     int intReturn = 0;
@@ -512,9 +541,9 @@ int checkLevel(obj objImage[N_LINHAS][N_COLUNAS], int* levelNumber)
     return intReturn;
 }
 
-int main()
+int main()//Função main, executa o projeto.
 {
-    srand(time(NULL));
+    srand(time(NULL));//Variáveis principais do projeto.
     int randomItem;
     int i,j;
     int onMenu = 1;
@@ -524,22 +553,21 @@ int main()
     int imortalCooldown;
     int hasSword = 0;
     int currentLevel = 1;
+    int isInverted = 0;
+    int isLeverActivated = 0;
     bool done = false;
     bool redraw = true;
     float x, y;
     FILE *saveLocation;
-    unsigned char tecla[ALLEGRO_KEY_MAX];
-    
+    unsigned char tecla[ALLEGRO_KEY_MAX];    
     ALLEGRO_EVENT event;
-
     char map[N_LINHAS][N_COLUNAS];
     char mapFile[10];
-
     obj objImage[N_LINHAS][N_COLUNAS];
 
-    inicializa(al_init(), "Allegro.");
+    inicializa(al_init(), "Allegro.");//Inicialização da Allegro...
     inicializa(al_install_keyboard(), "Teclado.");
-    ALLEGRO_TIMER* timer = al_create_timer(1.0 / 15.0);
+    ALLEGRO_TIMER* timer = al_create_timer(1.0 / 15.0);//Framerate e velocidade do jogo.
     inicializa(timer, "Temporizador.");
     ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
     inicializa(queue, "Fila de eventos");
@@ -548,16 +576,20 @@ int main()
     al_set_new_display_option(ALLEGRO_SAMPLES, 8, ALLEGRO_SUGGEST);
     al_set_new_bitmap_flags(ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR);
 
-    ALLEGRO_DISPLAY* disp = al_create_display(ESCALA*N_COLUNAS , N_LINHAS*ESCALA);
+    ALLEGRO_DISPLAY* disp = al_create_display(ESCALA*N_COLUNAS , N_LINHAS*ESCALA);//Tamanho do display.
     inicializa(disp, "Tela.");
     ALLEGRO_FONT* font = al_create_builtin_font();
     inicializa(font, "Fonte.");
     inicializa(al_init_primitives_addon(), "Adicionais primitivos.");
     inicializa(al_init_image_addon(), "Adicional de imagem.");
 
-    ALLEGRO_BITMAP* heroI = al_load_bitmap("images/heroF.png");
+    ALLEGRO_BITMAP* heroI = al_load_bitmap("images/heroF.png");//Inicialização de sprites gerais do jogo.
     ALLEGRO_BITMAP* heroGI = al_load_bitmap("images/heroGF.png");
     ALLEGRO_BITMAP* heroRI = al_load_bitmap("images/heroRF.png");
+
+    ALLEGRO_BITMAP* heroII = al_load_bitmap("images/heroIF.png");
+    ALLEGRO_BITMAP* heroGII = al_load_bitmap("images/heroIGF.png");
+    ALLEGRO_BITMAP* heroRII = al_load_bitmap("images/heroIRF.png");
 
     al_register_event_source(queue, al_get_keyboard_event_source());
     al_register_event_source(queue, al_get_display_event_source(disp));
@@ -566,16 +598,16 @@ int main()
     memset(tecla, 0, sizeof(tecla));
 
     al_start_timer(timer);
-    while(1)
+    while(1) //Loop do game.
     {
-        if(onMenu)
+        if(onMenu)//If para uso de menu.
         {
             al_wait_for_event(queue, &event);
 
-            switch(event.type)
+            switch(event.type)//Switch para recepção do evento acionado pelo usuário.
             {
                 case ALLEGRO_EVENT_TIMER:
-                    if(tecla[ALLEGRO_KEY_N])
+                    if(tecla[ALLEGRO_KEY_N])//Opção de novo jogo.
                     {
                         currentLevel = 1;                        
                         readMap(saveLocation,map,&currentLevel,mapFile);
@@ -588,29 +620,28 @@ int main()
                         onMenu = 0;
                     }
 
-                    if(tecla[ALLEGRO_KEY_C])
+                    if(tecla[ALLEGRO_KEY_C])//Opção de carregar o jogo.
                     {
-                        loadSave(saveLocation,objImage,map,&scoreCounter,&hp,&leverCooldown,&imortalCooldown,&hasSword,&x,&y,&currentLevel);
+                        loadSave(saveLocation,objImage,map,&scoreCounter,&hp,&leverCooldown,&imortalCooldown,&hasSword,&x,&y,&currentLevel, &isLeverActivated, &isInverted);
                         onMenu = 0;
                     }
 
-                    if(tecla[ALLEGRO_KEY_S])
+                    if(tecla[ALLEGRO_KEY_S])//Opção de salvar jogo.
                     {
-                        saveMap(saveLocation,objImage,map,scoreCounter,hp,leverCooldown,imortalCooldown,hasSword,x,y,currentLevel);
+                        saveMap(saveLocation,objImage,map,scoreCounter,hp,leverCooldown,imortalCooldown,hasSword,x,y,currentLevel,isLeverActivated,isInverted);
+                    }
+
+                    if(tecla[ALLEGRO_KEY_V])//Opção de voltar para o jogo.
+                    {
                         onMenu = 0;
                     }
 
-                    if(tecla[ALLEGRO_KEY_V])
-                    {
-                        onMenu = 0;
-                    }
-
-                    if(tecla[ALLEGRO_KEY_Q])
+                    if(tecla[ALLEGRO_KEY_Q])//Opção de sair do jogo.
                     {
                         done = true;
                     }
 
-                    for(int i = 0; i < ALLEGRO_KEY_MAX; i++)
+                    for(int i = 0; i < ALLEGRO_KEY_MAX; i++)//Sistema de leitura para duas teclas.
                     {
                         tecla[i] &= KEY_SEEN;
                     }
@@ -638,7 +669,7 @@ int main()
 
             if(redraw && al_is_event_queue_empty(queue))
             {
-                al_clear_to_color(al_map_rgb(0, 0, 0));
+                al_clear_to_color(al_map_rgb(0, 0, 0));//Visualização do menu.
                 al_draw_textf(font, al_map_rgb(255, 255, 255), 8*ESCALA, 5*ESCALA, 0, "Novo Jogo(N)|");
                 al_draw_textf(font, al_map_rgb(255, 255, 255), 10.25*ESCALA, 5*ESCALA, 0, "Carregar Jogo(C)|");
                 al_draw_textf(font, al_map_rgb(255, 255, 255), 13.25*ESCALA, 5*ESCALA, 0, "Salvar Jogo(S)|");
@@ -652,15 +683,15 @@ int main()
             }
 
         }else
-        {
-            randomItem =  rand() % 4;
+        {//Loop do próprio jogo.
+            randomItem =  rand() % 4;//Item randômico para os ogros.
             al_wait_for_event(queue, &event);
 
-            if(checkLevel(objImage, &currentLevel))
+            if(checkLevel(objImage, &currentLevel))//Primeira atividade: checkar o nivel do jogo, se sim, avança o mapa.
             {
-                if(currentLevel > 99)
+                if(currentLevel > MAX_LEVEL)
                 {
-                    currentLevel = 1;
+                    currentLevel = 1;//Mecanismo para 99 níveis.
                 }                                
                 readMap(saveLocation,map,&currentLevel, mapFile);
                 loadMap(map,objImage,&x,&y);
@@ -670,28 +701,28 @@ int main()
                 hasSword = 0;
             }
 
-            updateOgre(objImage,randomItem);
+            updateOgre(objImage,randomItem);//Realiza a inteligênia dos ogros.
 
-            ogreHit(objImage,&x,&y,map,&hp,&scoreCounter,&onMenu,&imortalCooldown,hasSword);
+            ogreHit(objImage,&x,&y,map,&hp,&scoreCounter,&onMenu,&imortalCooldown,&currentLevel,&leverCooldown,&hasSword);//Verifica o sistema de hits.
 
-            giveSword(objImage,&hasSword);
+            giveSword(objImage,&hasSword);//Verifica o sistema de espadas.
 
             if((objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'M') || (objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'C'))
             {
-                scoreCounter = collectItem(scoreCounter,objImage, x, y, &imortalCooldown);
+                scoreCounter = collectItem(scoreCounter,objImage, x, y, &imortalCooldown);//Sistema para coletar itens.
             }
 
             if(leverCooldown > 0)
             {
-                leverCooldown--;
+                leverCooldown--;//Reseta o tempo de recarga das alavancas.
             }
 
             if(imortalCooldown > 0)
             {
-                imortalCooldown--;
+                imortalCooldown--;//Reseta o tempo de imortalidade.
             }
 
-            switch(event.type)
+            switch(event.type)//Sistema de leitura de movimentação de ativação de alavancas.
             {
                 case ALLEGRO_EVENT_TIMER:
                     if(tecla[ALLEGRO_KEY_UP])
@@ -715,6 +746,7 @@ int main()
                         if(x == 0 || (objImage[(int)y/ESCALA][(int)(x-ESCALA)/ESCALA].body == 1)){}else
                         {
                             x-=ESCALA;
+                            isInverted = 1;
                         }
                     }
 
@@ -723,6 +755,7 @@ int main()
                         if(x == 26*ESCALA || (objImage[(int)y/ESCALA][(int)(x+ESCALA)/ESCALA].body == 1)){}else
                         {
                             x+=ESCALA;
+                            isInverted = 0;
                         }
                     }
 
@@ -738,7 +771,7 @@ int main()
 
                     if((tecla[ALLEGRO_KEY_B] && ((objImage[(int)y/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)(y-ESCALA)/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)(y+ESCALA)/ESCALA][(int)x/ESCALA].identity == 'B') || (objImage[(int)y/ESCALA][(int)(x-ESCALA)/ESCALA].identity == 'B')|| (objImage[(int)y/ESCALA][(int)(x+ESCALA)/ESCALA].identity == 'B'))) && (leverCooldown == 0))
                     {
-                        leverActivate(&leverCooldown, objImage);
+                        leverActivate(&leverCooldown, objImage, &isLeverActivated);
                     }
 
                     for(int i = 0; i < ALLEGRO_KEY_MAX; i++)
@@ -767,10 +800,10 @@ int main()
                 break;
             }
 
-            if(redraw && al_is_event_queue_empty(queue))
+            if(redraw && al_is_event_queue_empty(queue))//Sistema para projeção dos gráficos.
             {
                 al_clear_to_color(al_map_rgb(0, 0, 0));
-                drawMap(objImage);
+                drawMap(objImage, isLeverActivated);
                 if(hasSword)
                 {
                     al_draw_textf(font, al_map_rgb(255, 255, 255), 12*ESCALA, 0, 0, "Excalibur ativada.");
@@ -779,20 +812,39 @@ int main()
                 {
                     if(imortalCooldown % 2 == 0)
                     {
+                        if(isInverted)
+                        {
+                             al_draw_bitmap(heroGII, x,y, 0);   
+                        }else
+                        {
+                            al_draw_bitmap(heroGI, x,y, 0);  
+                        }
                         //al_draw_filled_rectangle(x, y, x + ESCALA-1, y + ESCALA-1, al_map_rgb(  43,255,0));
-                        al_draw_bitmap(heroGI, x,y, 0);  
+                       
                     }else
                     {
-                        //al_draw_filled_rectangle(x, y, x + ESCALA-1, y + ESCALA-1, al_map_rgb(255,0,0));
-                        al_draw_bitmap(heroRI, x,y, 0);  
+                        if(isInverted)
+                        {
+                            al_draw_bitmap(heroRII, x,y, 0); 
+                        }else
+                        {
+                            al_draw_bitmap(heroRI, x,y, 0); 
+                        }                        
+                        //al_draw_filled_rectangle(x, y, x + ESCALA-1, y + ESCALA-1, al_map_rgb(255,0,0));                         
                     }
 
                 }else
                 {
-                    //al_draw_filled_rectangle(x, y, x + ESCALA-1, y + ESCALA-1, al_map_rgb(153,102,255));
-                    al_draw_bitmap(heroI, x,y, 0);  
+                    if(isInverted)
+                    {
+                        al_draw_bitmap(heroII, x,y, 0);
+                    }else
+                    {
+                        al_draw_bitmap(heroI, x,y, 0);
+                    } 
+                    //al_draw_filled_rectangle(x, y, x + ESCALA-1, y + ESCALA-1, al_map_rgb(153,102,255));                      
                 }
-                al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 0, 0, "X: %.1f Y: %.1f", x, y);
+                //al_draw_textf(font, al_map_rgb(255, 255, 255), 0, 0, 0, "X: %.1f Y: %.1f", x, y);
                 al_draw_textf(font, al_map_rgb(255, 255, 255), 24*ESCALA, 0, 0, "Pontuação: %d",scoreCounter);
                 al_draw_textf(font, al_map_rgb(255, 255, 255), 22*ESCALA, 0, 0, "Vida: %d",hp);
                 al_flip_display();
@@ -802,7 +854,7 @@ int main()
         }
     }
 
-    al_destroy_font(font);
+    al_destroy_font(font);//Encerra os addos quando o while é quebrado.
     al_destroy_display(disp);
     al_destroy_timer(timer);
     al_destroy_event_queue(queue);
